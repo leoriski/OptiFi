@@ -1,0 +1,276 @@
+/* ══════════════════════════════════════════════════════════════════
+   OptiFi — sistema visual portado do protótipo (a especificação).
+   1. prototype.css: as 917 linhas de CSS originais, intactas.
+   2. Este ficheiro: variáveis de modo/accent (equivalente CSS puro do
+      applyMode/applyAccent do protótipo) + pequenos utilitários da app.
+   ══════════════════════════════════════════════════════════════════ */
+
+@import './prototype.css';
+
+/* Modos — espelham o objeto MODES do protótipo */
+:root,
+[data-mode='dark'] {
+  --bg: #0b0e14;
+  --bg2: #11151e;
+  --card: #161b26;
+  --card2: #1d2330;
+  --b: #262d3d;
+  --tx: #f4f7fb;
+  --tx2: #9aa7bd;
+  --tx3: #5c6781;
+  --gr: #22c55e;
+  --re: #f43f5e;
+  --ye: #f59e0b;
+  --nav-bg: rgba(11, 14, 20, 0.85);
+  --sheet-bg: rgba(17, 21, 30, 0.97);
+  --sheet-b: rgba(255, 255, 255, 0.08);
+}
+
+[data-mode='light'] {
+  --bg: #f7f8fa;
+  --bg2: #ffffff;
+  --card: #ffffff;
+  --card2: #f2f4f7;
+  --b: #e4e8ef;
+  --tx: #0f1623;
+  --tx2: #566175;
+  --tx3: #8a93a6;
+  --gr: #16a34a;
+  --re: #e11d48;
+  --ye: #d97706;
+  --nav-bg: rgba(255, 255, 255, 0.85);
+  --sheet-bg: rgba(255, 255, 255, 0.98);
+  --sheet-b: rgba(15, 22, 35, 0.08);
+}
+
+/* Accents — o padrão ("Neutro") é monocromático: o accent É a cor do texto.
+   Tudo o que usava --pr (nav ativa, números, links, chips, gráfico) fica
+   preto/branco automaticamente. Os accents coloridos continuam opcionais. */
+:root,
+[data-accent='brand'] {
+  --pr: var(--tx);
+  --prd: var(--tx2);
+  --ac: var(--tx2);
+  --brand-gradient: var(--tx);
+  --theme-glow: transparent;
+}
+[data-accent='amber'] {
+  --pr: #f59e0b;
+  --prd: #b45309;
+  --ac: #ffc44d;
+  --brand-gradient: linear-gradient(135deg, #f59e0b, #ffc44d);
+  --theme-glow: rgba(245, 158, 11, 0.45);
+}
+[data-mode='light'][data-accent='amber'] {
+  --pr: #b45309;
+}
+[data-accent='violet'] {
+  --pr: #7c5cff;
+  --prd: #6d28d9;
+  --ac: #b794ff;
+  --brand-gradient: linear-gradient(135deg, #7c5cff, #b794ff);
+  --theme-glow: rgba(124, 92, 255, 0.45);
+}
+[data-mode='light'][data-accent='violet'] {
+  --pr: #6d28d9;
+}
+[data-accent='emerald'] {
+  --pr: #10b981;
+  --prd: #047857;
+  --ac: #5eead4;
+  --brand-gradient: linear-gradient(135deg, #10b981, #5eead4);
+  --theme-glow: rgba(16, 185, 129, 0.45);
+}
+[data-mode='light'][data-accent='emerald'] {
+  --pr: #047857;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   REGRA DE DESIGN (limpeza à Revolut): neutros + UM accent (--pr).
+   Verde/vermelho SÓ para semântica de dinheiro (+/−, ganho/perda).
+   Sem gradientes em botões/barras; tipografia faz a hierarquia.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Cartão de saldo: plano e neutro (era gradiente azul com glow) */
+.balcard {
+  background: var(--card);
+  border: 1px solid var(--b);
+}
+.balcard::before {
+  display: none;
+}
+
+/* Dica do dia: neutra (era âmbar) */
+.tip-card {
+  background: var(--card);
+  border: 1px solid var(--b);
+}
+.tip-lbl {
+  color: var(--tx3);
+}
+
+/* Selo "Seguro": neutro (era verde) */
+.secure-badge {
+  background: var(--card2);
+  border-color: var(--b);
+  color: var(--tx2);
+}
+
+/* Badges de insight: todos neutros — a semântica vive no sinal +/− */
+.cat-alert,
+.cat-achievement,
+.cat-leak,
+.cat-savings {
+  background: var(--card2) !important;
+  color: var(--tx2) !important;
+  border-color: var(--b) !important;
+}
+
+/* Valores monocromáticos: o sinal (+/−) dá a semântica, a cor segue o tema
+   (branco no escuro, preto no claro). Vermelho/verde saem dos números. */
+.tx-amt-neg,
+.ev,
+.sv {
+  color: var(--tx);
+}
+/* Entradas/ganhos (+) a verde — pedido do produto (16 jul) */
+.tx-amt-pos,
+.iv {
+  color: var(--gr);
+}
+.money-leak-card {
+  border-left-color: var(--tx);
+}
+.plan-summary-card {
+  border-left-color: var(--tx);
+}
+.leak-optimized {
+  border-left-color: var(--tx);
+}
+.leak-badge {
+  color: var(--tx2);
+  background: var(--card2);
+  border-color: var(--b);
+}
+.leak-value {
+  color: var(--tx);
+}
+.leak-breakdown-amt {
+  color: var(--tx);
+}
+
+/* Com o accent neutro, fundos --pr são escuros no claro e claros no escuro —
+   o texto por cima tem de ser --bg (e não #fff fixo) para manter contraste. */
+.tab.on,
+.cat-pill.on,
+.ins-pill.on {
+  color: var(--bg) !important;
+}
+
+/* Barra de baixo: o NOME de cada separador está sempre visível (não só o
+   ativo) — quem abre a app pela primeira vez percebe logo o que é cada ícone. */
+.nb-label {
+  opacity: 1;
+  transform: none;
+  max-height: 14px;
+}
+
+/* Logótipo e wordmark monocromáticos */
+.logo span {
+  background: none;
+  -webkit-text-fill-color: var(--tx);
+  color: var(--tx);
+}
+
+/* Botão tracejado "adicionar": neutro (tinha tint azul fixo em rgba) */
+.addbtn {
+  background: transparent;
+  border-color: var(--b);
+}
+
+/* Utilitários próprios da app real (auth e formulários) */
+.btn-primary {
+  display: inline-block;
+  width: 100%;
+  padding: 13px;
+  background: var(--pr);
+  border: none;
+  border-radius: var(--rs);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  text-align: center;
+}
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn-secondary {
+  display: inline-block;
+  width: 100%;
+  padding: 12px;
+  background: var(--card2);
+  border: 1px solid var(--b);
+  border-radius: var(--rs);
+  color: var(--tx);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  text-align: center;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 13px 14px;
+  background: var(--card2);
+  border: 1px solid var(--b);
+  border-radius: var(--rs);
+  color: var(--tx);
+  font-size: 14px;
+  font-family: 'Manrope', sans-serif;
+  outline: none;
+}
+.auth-input:focus {
+  border-color: var(--pr);
+}
+
+/* Pílulas de ação pequenas (veredictos, plano, limites) */
+/* .goal-fill do protótipo não trazia cor (era inline por meta) —
+   accent sólido, sem gradiente. */
+.goal-fill {
+  background: var(--pr);
+}
+
+.pill-btn {
+  padding: 7px 12px;
+  border-radius: var(--rs);
+  border: 1px solid var(--b);
+  background: var(--card2);
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Wizard de importação: neutraliza os tints azuis fixos do protótipo */
+.wiz-bank-item:hover {
+  border-color: var(--tx2);
+  background: var(--card2);
+}
+.wiz-bank-item.selected {
+  border-color: var(--pr);
+  background: var(--card2);
+}
+.wiz-guide-step-num {
+  background: var(--card2);
+  border-color: var(--b);
+  color: var(--tx);
+}
+.wiz-upload-zone {
+  border-color: var(--b);
+}
