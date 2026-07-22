@@ -236,6 +236,14 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--tx);min-h
 .invest-more[open]>summary .chev{transform:rotate(180deg)}
 .invest-more[open]>summary{color:var(--tx2);margin-bottom:6px}
 .invest-more-body{padding:8px 10px;border-radius:var(--rs);background:var(--card2);font-size:11px;font-weight:600;color:var(--tx2);line-height:1.45}
+/* Retenção — streak de meses analisados + lembrete de importação */
+.streak-pill{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;padding:5px 11px;border-radius:20px;background:color-mix(in srgb,var(--am,#f59e0b) 15%,transparent);color:var(--am,#f59e0b);font-size:11px;font-weight:800;white-space:nowrap;cursor:default}
+.import-reminder{display:flex;align-items:center;gap:12px;padding:13px 15px;margin-bottom:13px;border-radius:var(--r,16px);background:color-mix(in srgb,var(--pr) 12%,transparent);border:1px solid color-mix(in srgb,var(--pr) 28%,transparent);text-decoration:none;color:inherit;transition:background .15s}
+.import-reminder:hover{background:color-mix(in srgb,var(--pr) 18%,transparent)}
+.import-reminder-icon{flex-shrink:0;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--pr) 18%,transparent);color:var(--pr)}
+.import-reminder-title{font-size:13px;font-weight:800;color:var(--tx);line-height:1.35}
+.import-reminder-sub{font-size:11px;color:var(--tx2);margin-top:2px}
+.import-reminder-cta{flex-shrink:0;color:var(--pr);font-size:20px;font-weight:800}
 /* Onboarding — CTA "ver demonstração" e privacidade reforçada */
 .wiz-demo-sep{display:flex;align-items:center;text-align:center;gap:10px;margin:16px 0 12px;color:var(--tx3);font-size:11px;font-weight:700}
 .wiz-demo-sep::before,.wiz-demo-sep::after{content:'';flex:1;height:1px;background:var(--b)}

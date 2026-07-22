@@ -13,3 +13,4 @@ export * from './analyze.js';
 export * from './catalog.js';
 export * from './rule.js';
 export * from './insights.js';
+export * from './cadence.js';

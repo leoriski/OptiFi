@@ -7,7 +7,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { daysLeftInMonth } from '@optifi/core';
+import { daysLeftInMonth, importCadence } from '@optifi/core';
 import { useI18n, type DictKey } from '@/lib/i18n';
 import { useFinance } from '@/lib/useFinance';
 import { fmtEur, fmtEur0, monthLabel, monthShort, fill } from '@/lib/format';
@@ -109,11 +109,22 @@ export default function HomePage() {
 
   if (loading) return <div className="card" style={{ color: 'var(--tx2)', fontSize: 13 }}>…</div>;
 
+  // Retenção: streak de meses seguidos analisados + falta o último mês fechado.
+  const cadence = importCadence(history.map((h) => h.statement_month), new Date());
+
   const greeting = (
     <div style={{ marginBottom: 18 }}>
-      <div className="ptitle">
-        {t(greetKey)}
-        {profileName ? `, ${profileName.split(' ')[0]}` : ''}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+        <div className="ptitle">
+          {t(greetKey)}
+          {profileName ? `, ${profileName.split(' ')[0]}` : ''}
+        </div>
+        {cadence.streak >= 2 && (
+          <div className="streak-pill" title={t('streak_tip')}>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M12 2c1 3-1 4-2 6-1 2 0 4 2 4 1.5 0 2.5-1 2.5-2 1.5 1.5 2.5 3.5 2.5 5.5A7 7 0 0 1 5 15c0-3 2-5 3-7 1.3-1.6 3.2-3 4-6Z" /></svg>
+            <span>{fill(t('streak_badge'), { n: cadence.streak })}</span>
+          </div>
+        )}
       </div>
       <div style={{ fontSize: 12, color: 'var(--tx2)', marginTop: 1 }}>{fill(t('home_sub'), { month: currMonth })}</div>
     </div>
@@ -134,6 +145,24 @@ export default function HomePage() {
       </div>
     </div>
   );
+
+  // Lembrete de retenção: um novo mês fechou e ainda não o importaste.
+  const importReminder = cadence.missingPrevMonth ? (
+    <Link href="/atividade" className="import-reminder">
+      <div className="import-reminder-icon">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="import-reminder-title">{fill(t('import_reminder_title'), { month: monthLabel(cadence.prevMonth, lang) })}</div>
+        <div className="import-reminder-sub">{t('import_reminder_sub')}</div>
+      </div>
+      <span className="import-reminder-cta">→</span>
+    </Link>
+  ) : null;
 
   if (!imported || !fs || !imp || !analysis) {
     return (
@@ -209,6 +238,7 @@ export default function HomePage() {
   return (
     <>
       {greeting}
+      {importReminder}
       {tipCard}
 
       {/* Money Leak */}
