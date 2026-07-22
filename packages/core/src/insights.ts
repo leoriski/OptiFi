@@ -344,9 +344,16 @@ function spendingObservations(ctx: SmartContext): Insight[] {
   return out;
 }
 
-/** 4. Estrutura: peso da habitação e distância aos 20% de poupança. */
+/** 4. Estrutura: défice do mês, peso da habitação e distância aos 20% de poupança. */
 function structuralAlerts(ctx: SmartContext): Insight[] {
   const out: Insight[] = [];
+
+  // Défice: gastaste mais do que recebeste. É o sinal mais importante a
+  // levantar — vai para o topo dos alertas.
+  if (ctx.expenses > ctx.income) {
+    out.push({ id: 'month_deficit', kind: 'alert', saving: 0, params: { amount: round2(ctx.expenses - ctx.income) } });
+  }
+
   if (ctx.income <= 0) return out;
 
   const housing = ctx.categorySpend.find((c) => c.categoryId === 'habitacao')?.amount ?? 0;

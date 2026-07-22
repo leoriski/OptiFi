@@ -199,6 +199,7 @@ export default function InsightsPage() {
     if (ins.id === 'daily_avg') return fill(t('ins_daily_avg'), { amount: fmtEur(Number(p.amount)), days: Number(p.days) });
     if (ins.id === 'weekend_spend') return fill(t('ins_weekend_spend'), { pct: Number(p.pct), amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'cat_concentration') return fill(t('ins_cat_concentration'), { cat: catLabel(String(p.cat)), pct: Number(p.pct), amount: fmtEur(Number(p.amount)) });
+    if (ins.id === 'month_deficit') return fill(t('ins_month_deficit'), { amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'invest_capacity') return fill(t('ins_invest_capacity'), { amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'renegotiate_two') return fill(t('ins_renegotiate'), { annual: fmtEur(Number(p.annual)), a: String(p.a), b: String(p.b) });
     if (ins.id === 'goal_accelerate') return fill(t('ins_goal_accelerate'), { extra: fmtEur(Number(p.extra)), name: String(p.name), months: Number(p.months) });
@@ -208,7 +209,7 @@ export default function InsightsPage() {
   // Anti-densidade: os cartões ESTRATÉGICOS (visão geral) vêm primeiro, seguidos
   // das poupanças concretas. Só os primeiros ficam à vista; o resto (observações
   // e conquistas) abre com "Ver mais" — a página não afoga quem chega.
-  const STRATEGIC = ['invest_capacity', 'renegotiate_two', 'goal_accelerate'];
+  const STRATEGIC = ['month_deficit', 'invest_capacity', 'renegotiate_two', 'goal_accelerate'];
   const allInsights = [...smart, ...analysis.insights.filter((i) => i.kind !== 'leak')];
   const orderedInsights = [
     ...STRATEGIC.map((id) => allInsights.find((i) => i.id === id)).filter((i): i is Insight => !!i),

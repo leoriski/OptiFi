@@ -34,6 +34,20 @@ describe('pipeline completo (ingestStatement)', () => {
     expect(salario.category).toBe('receita');
   });
 
+  it('transferências entre pessoas ficam FORA do rendimento/despesa (2 sentidos)', () => {
+    const csv = `Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2026-05-02 09:14:33,2026-05-03 10:02:11,Pingo Doce Lisboa,-42.17,0.00,EUR,COMPLETED,1204.51
+TRANSFER,Current,2026-05-06 11:00:00,2026-05-06 11:00:01,TRF. P/O Joao Amigo,50.00,0.00,EUR,COMPLETED,1254.51
+TRANSFER,Current,2026-05-07 11:00:00,2026-05-07 11:00:01,TRF P/ Maria Colega,-30.00,0.00,EUR,COMPLETED,1224.51
+TRANSFER,Current,2026-05-08 11:00:00,2026-05-08 11:00:01,Salario ACME,900.00,0.00,EUR,COMPLETED,2124.51
+`;
+    const { summary } = ingestStatement(enc.encode(csv));
+    expect(summary.income).toBeCloseTo(900, 2); // só o salário, não a transferência recebida (50)
+    expect(summary.expenses).toBeCloseTo(42.17, 2); // só o supermercado, não a transferência enviada (30)
+    expect(summary.transactions.find((t) => t.description.includes('Joao'))!.category).toBe('transferencias');
+    expect(summary.transactions.find((t) => t.description.includes('Maria'))!.category).toBe('transferencias');
+  });
+
   it('bankHint errado não força um parse errado — a deteção manda', () => {
     const { bank } = ingestStatement(enc.encode(CGD_CSV), { bankHint: 'revolut' });
     expect(bank).toBe('cgd');

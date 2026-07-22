@@ -5,7 +5,8 @@
 // vistas leem daqui — a fonte única de verdade. Fase 4: objetivos, limites
 // por categoria e movimentos manuais entram no cálculo.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { isDemoActive, buildDemoFinance, emptyDemoOverrides, DEMO_PROFILE_NAME, type DemoOverrides } from './demo';
 import {
   computeFinancialState,
   generateAnalysis,
@@ -183,7 +184,35 @@ export function useFinance(): Finance {
   const [allocatedGoalIds, setAllocatedGoalIds] = useState<string[]>([]);
   const planMonth = monthKey(new Date());
 
+  // Overrides interativos do modo-demo (subs canceladas, plano feito) — em ref
+  // para o reload ler sempre o valor mais recente sem recriar o callback.
+  const demoOv = useRef<DemoOverrides>(emptyDemoOverrides());
+
   const reload = useCallback(async () => {
+    // ── Modo demonstração: tudo em memória, pelo mesmo motor, zero base de dados ──
+    if (isDemoActive()) {
+      const d = buildDemoFinance(planMonth, demoOv.current);
+      setImp(d.imp);
+      setHistory(d.history);
+      setProfileName(DEMO_PROFILE_NAME);
+      setGoals(d.goals);
+      setLimits({});
+      setManual([]);
+      setMealCard(0);
+      setAllocatedGoalIds([]);
+      setBalanceSet(false);
+      setOpeningBalance(null);
+      setCategorySpend(d.categorySpend);
+      setSubs(d.subs);
+      setTxs(d.txs);
+      setAnalysis(d.analysis);
+      setSmart(d.smart);
+      setPlanState(d.planState);
+      setFs(d.fs);
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     const { data: imports } = await supabase
       .from('imports')
@@ -405,6 +434,11 @@ export function useFinance(): Finance {
 
   const setSubVerdict = useCallback(
     async (id: string, status: SubscriptionStatus) => {
+      if (isDemoActive()) {
+        demoOv.current.subStatus[id] = status;
+        await reload();
+        return;
+      }
       await createClient().from('subscriptions').update({ user_status: status }).eq('id', id);
       await reload();
     },
@@ -413,6 +447,7 @@ export function useFinance(): Finance {
 
   const setBalance = useCallback(
     async (eur: number) => {
+      if (isDemoActive()) return;
       const uid = await userId();
       // amount tem CHECK > 0 no schema; o saldo de abertura é "quanto tens",
       // por isso exigimos ≥ 0 e guardamos ≥ 0.01 para respeitar a constraint.
@@ -435,6 +470,7 @@ export function useFinance(): Finance {
 
   const setMealCardValue = useCallback(
     async (eur: number) => {
+      if (isDemoActive()) return;
       const uid = await userId();
       if (!uid || Number.isNaN(eur) || eur < 0) return;
       await createClient().from('profiles').update({ meal_card_eur: eur }).eq('id', uid);
@@ -444,6 +480,7 @@ export function useFinance(): Finance {
   );
 
   const clearBalance = useCallback(async () => {
+    if (isDemoActive()) return;
     const uid = await userId();
     if (!uid) return;
     await createClient().from('manual_entries').delete().eq('user_id', uid).eq('month', planMonth).eq('note', OPENING_NOTE);
@@ -452,6 +489,7 @@ export function useFinance(): Finance {
 
   const addSubscription = useCallback(
     async (name: string, price: number) => {
+      if (isDemoActive()) return;
       const uid = await userId();
       if (!uid || !name.trim() || !(price > 0)) return;
       // import_id null = manual; sobrevive a reimportações. Começa 'unknown'
@@ -464,6 +502,7 @@ export function useFinance(): Finance {
 
   const removeSubscription = useCallback(
     async (id: string) => {
+      if (isDemoActive()) return;
       await createClient().from('subscriptions').delete().eq('id', id);
       await reload();
     },
@@ -472,6 +511,11 @@ export function useFinance(): Finance {
 
   const setPlanItemState = useCallback(
     async (itemKey: string, state: PlanItemStatus, title: string, saving: number) => {
+      if (isDemoActive()) {
+        demoOv.current.planState[itemKey] = { state };
+        await reload();
+        return;
+      }
       if (!imp) return;
       const supabase = createClient();
       const uid = await userId();
@@ -499,6 +543,7 @@ export function useFinance(): Finance {
 
   const saveGoal = useCallback(
     async (draft: GoalDraft) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       if (!uid) return;
@@ -521,6 +566,7 @@ export function useFinance(): Finance {
 
   const deleteGoal = useCallback(
     async (id: string) => {
+      if (isDemoActive()) return;
       await createClient().from('goals').delete().eq('id', id);
       await reload();
     },
@@ -529,6 +575,7 @@ export function useFinance(): Finance {
 
   const setAllocation = useCallback(
     async (id: string, value: number) => {
+      if (isDemoActive()) return;
       await createClient().from('goals').update({ monthly_allocation: Math.max(0, value) }).eq('id', id);
       await reload();
     },
@@ -537,6 +584,7 @@ export function useFinance(): Finance {
 
   const withdrawFromGoal = useCallback(
     async (id: string, amount: number) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       const goal = goals.find((g) => g.id === id);
@@ -553,6 +601,7 @@ export function useFinance(): Finance {
 
   const markGoalAllocated = useCallback(
     async (id: string) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       const goal = goals.find((g) => g.id === id);
@@ -573,6 +622,7 @@ export function useFinance(): Finance {
 
   const unmarkGoalAllocated = useCallback(
     async (id: string) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       const goal = goals.find((g) => g.id === id);
@@ -594,6 +644,7 @@ export function useFinance(): Finance {
 
   const setLimit = useCallback(
     async (category: string, eur: number) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       if (!uid || eur < 0) return;
@@ -605,6 +656,7 @@ export function useFinance(): Finance {
 
   const clearLimit = useCallback(
     async (category: string) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       if (!uid) return;
@@ -616,6 +668,7 @@ export function useFinance(): Finance {
 
   const addManual = useCallback(
     async (entry: { type: 'income' | 'expense'; amount: number; category: CategoryKey; note: string; mealCard?: boolean }) => {
+      if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
       if (!uid || entry.amount <= 0) return;
@@ -635,6 +688,7 @@ export function useFinance(): Finance {
 
   const removeManual = useCallback(
     async (id: string) => {
+      if (isDemoActive()) return;
       await createClient().from('manual_entries').delete().eq('id', id);
       await reload();
     },

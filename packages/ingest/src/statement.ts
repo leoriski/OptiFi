@@ -24,15 +24,23 @@ export function buildStatement(txs: ParsedTransaction[], endingBalance?: number)
 
   const monthTxs = txs.filter((t) => t.date.startsWith(statementMonth));
   const withFp = assignFingerprints(monthTxs);
-  const transactions: CategorizedTransaction[] = withFp.map((tx) => ({
-    ...tx,
-    category: tx.type === 'income' ? 'receita' : categorizeMerchant(tx.description),
-  }));
+  // Categoriza pelo descritivo. Nas ENTRADAS, o descritivo pode revelar uma
+  // transferência entre pessoas (ex.: "TRF. P/O João" = um amigo a devolver) —
+  // essa NÃO é rendimento; fica em 'transferencias'. Tudo o resto que entra é
+  // 'receita' (salário, depósito, reembolso…), mesmo com descritivo desconhecido.
+  const transactions: CategorizedTransaction[] = withFp.map((tx) => {
+    const cat = categorizeMerchant(tx.description);
+    return { ...tx, category: tx.type === 'income' ? (cat === 'transferencias' ? 'transferencias' : 'receita') : cat };
+  });
 
+  // Transferências entre pessoas (dinheiro que apenas circula) NÃO são nem
+  // rendimento nem consumo — ficam fora dos totais que alimentam a análise
+  // (défice, taxa de poupança, regra). Aparecem à parte na Atividade.
   let income = 0;
   let expenses = 0;
   let housingFixed = 0;
   for (const tx of transactions) {
+    if (tx.category === 'transferencias') continue;
     if (tx.type === 'income') income += tx.amount;
     else {
       expenses += tx.amount;

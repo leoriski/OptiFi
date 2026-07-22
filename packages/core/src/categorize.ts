@@ -22,7 +22,7 @@ export const MERCHANT_RULES: MerchantRule[] = [
 
   // Transferências para PESSOAS (dinheiro que sai mas não é consumo/desperdício)
   // — não geram fuga. Só as SAÍDAS: 'trf ... p/', 'trf. p/o', 'mb way p/'.
-  { key: 'transferencias', patterns: ['trf.imed. p/', 'trf. p/o', 'trf mb way p/', 'transferencia p/', 'transferencia para', 'mb way p/', 'trf imediata p'] },
+  { key: 'transferencias', patterns: ['trf.imed. p/', 'trf. p/o', 'trf mb way p/', 'trf p/', 'transferencia p/', 'transferencia para', 'mb way p/', 'trf imediata p'] },
 
   // Alimentação = comida ESSENCIAL (supermercado/mercearia). Comer fora é lazer.
   { key: 'alimentacao', patterns: ['pingo doce', 'continente', 'lidl', 'aldi', 'intermarche', 'minipreco', 'auchan', 'jumbo', 'mercadona', 'el corte ingles', 'supermercado', 'mercado', 'frutaria', 'talho', 'mercearia', 'padaria'] },

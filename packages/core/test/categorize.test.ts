@@ -61,6 +61,7 @@ describe('descritivos REAIS dos extratos (maiúsculas, sem acentos, prefixos)', 
     ['TRF.IMED. P/ PAULO VICTOR SURIANO', 'transferencias'],
     ['TRF MB WAY P/ DELFIO LUIS OFESSE', 'transferencias'],
     ['TRF. P/O DELFIO LUIS OFESSE', 'transferencias'],
+    ['TRF P/ DIOGO ALMEIDA BARROS', 'transferencias'], // "TRF P/ NOME" simples (sem MB WAY, sem ponto)
     ['TRF.IMED. DE DELFIO LUIS OFESSE', 'receita'],
   ])('%s → %s', (name, expected) => {
     expect(categorizeMerchant(name)).toBe(expected);

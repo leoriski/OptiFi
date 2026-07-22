@@ -69,6 +69,10 @@ export interface FinancialState {
   allocatedTotal: number;
   unallocated: number;
   overAllocated: boolean;
+  /** Quanto reservaste ALÉM da folga do mês (só > 0 se tens metas e passaste). */
+  overReserved: number;
+  /** Quanto as despesas superaram as receitas no mês fechado (0 se houve folga). */
+  monthDeficit: number;
   /** What's left of the baseline net after reserving for goals, plus withdrawals. */
   freeToSpend: number;
   goalProjections: Record<string, GoalProjection>;
@@ -146,7 +150,13 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
   // current-month movements are NOT folded in — each month keeps its own
   // liquid (May's net is never summed with June's manual salary).
   const unallocated = net - allocatedTotal;
-  const overAllocated = unallocated < 0;
+  // Over-allocated = reservaste para metas MAIS do que a folga do mês. Só conta
+  // se de facto reservaste algo (allocatedTotal > 0); um mês negativo SEM metas
+  // é um DÉFICE, não um "reservaste demais" — são sinais distintos.
+  const monthSurplus = Math.max(0, net);
+  const overReserved = Math.round(Math.max(0, allocatedTotal - monthSurplus) * 100) / 100;
+  const overAllocated = overReserved > 0;
+  const monthDeficit = Math.round(Math.max(0, input.expenses - input.income) * 100) / 100;
 
   // 3c. Free to spend = baseline net after reserving for goals, plus anything
   //     withdrawn back. Reserved money is conceptual (stays in the user's
@@ -215,6 +225,8 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
     allocatedTotal,
     unallocated,
     overAllocated,
+    overReserved,
+    monthDeficit,
     freeToSpend,
     goalProjections,
     goalAllocationStatus,

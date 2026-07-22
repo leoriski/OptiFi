@@ -7,10 +7,12 @@
 // sugestões resultantes aparecem na Análise (motor de insights).
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { parseCsv, decodeStatementText } from '@optifi/ingest';
 import { prettyMerchant, type CategoryKey } from '@optifi/core';
 import { useI18n, type DictKey } from '@/lib/i18n';
 import { useFinance } from '@/lib/useFinance';
+import { enterDemo, exitDemo } from '@/lib/demo';
 import { fmtEur, monthLabel, fill } from '@/lib/format';
 import { CategoryIcon, CATEGORY_COLOR } from '@/components/CategoryIcon';
 
@@ -45,8 +47,15 @@ function CatChip({ category }: { category: string }) {
 
 export default function ActivityPage() {
   const { t, lang } = useI18n();
+  const router = useRouter();
   const fin = useFinance();
   const { loading, imported, imp, txs, subs, manual, planMonth } = fin;
+
+  // Entra no modo demonstração (perfil Ana) e leva à Home populada.
+  const startDemo = () => {
+    enterDemo();
+    router.push('/');
+  };
 
   const [wiz, setWiz] = useState<WizStep>(null);
   const [bank, setBank] = useState<Bank>('revolut');
@@ -92,6 +101,7 @@ export default function ActivityPage() {
     if (res.ok) {
       pendingFile.current = null;
       setWiz(null);
+      exitDemo(); // uma importação REAL desliga o modo demonstração
       await fin.reload();
       return;
     }
@@ -178,6 +188,16 @@ export default function ActivityPage() {
               ))}
             </div>
             <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 12 }}>{t('wiz_privacy')}</div>
+            {!imported && (
+              <>
+                <div className="wiz-demo-sep"><span>{t('wiz_demo_or')}</span></div>
+                <button className="wiz-demo-btn" onClick={startDemo}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  <span>{t('wiz_demo_cta')}</span>
+                </button>
+                <div className="wiz-demo-hint">{t('wiz_demo_hint')}</div>
+              </>
+            )}
             {imported && (
               <button className="wiz-back" style={{ marginTop: 12 }} onClick={() => setWiz(null)}>
                 {t('wiz_back')}
@@ -218,6 +238,10 @@ export default function ActivityPage() {
                 <span className="wiz-upload-type-badge">CSV</span>
                 <span className="wiz-upload-type-badge">PDF</span>
               </div>
+            </div>
+            <div className="wiz-privacy-strong">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>
+              <span>{t('wiz_privacy_strong')}</span>
             </div>
             {error && <div style={{ marginTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--re)' }}>{t(error)}</div>}
             <button className="wiz-back" style={{ marginTop: 14 }} onClick={() => setWiz('bank')}>

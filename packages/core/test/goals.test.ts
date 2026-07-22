@@ -34,7 +34,20 @@ describe('goal allocation and the reserved-money model', () => {
     const s = computeFinancialState(withAllocation('g1', 800));
     expect(s.unallocated).toBe(-40);
     expect(s.overAllocated).toBe(true);
+    expect(s.overReserved).toBe(40);
+    expect(s.monthDeficit).toBe(0); // net positivo → não há défice
     expect(s.freeToSpend).toBe(0);
+  });
+
+  it('mês NEGATIVO sem metas é DÉFICE, não "reservaste demais"', () => {
+    const input = baselineInput();
+    input.income = 1000;
+    input.expenses = 1500;
+    input.goals.forEach((g) => (g.monthlyAllocation = 0)); // nada reservado
+    const s = computeFinancialState(input);
+    expect(s.overAllocated).toBe(false); // não reservaste nada
+    expect(s.overReserved).toBe(0);
+    expect(s.monthDeficit).toBe(500); // gastaste 500 a mais do que recebeste
   });
 
   it('withdrawn money returns to the spendable pool', () => {

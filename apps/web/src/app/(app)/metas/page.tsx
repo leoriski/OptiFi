@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { useFinance, type GoalRow } from '@/lib/useFinance';
-import { fmtEur, fill } from '@/lib/format';
+import { fmtEur, fmtEur0, fill, monthLabel } from '@/lib/format';
 import { EmptyImportState } from '@/components/EmptyImportState';
 import { Drawer } from '@/components/Drawer';
 import { GoalIcon, GoalIconPicker } from '@/components/GoalIcon';
@@ -40,11 +40,11 @@ const emptyForm = (): FormState => ({
 export default function GoalsPage() {
   const { t, lang } = useI18n();
   const fin = useFinance();
-  const { loading, imported, fs, goals } = fin;
+  const { loading, imported, imp, fs, goals } = fin;
   const [form, setForm] = useState<FormState | null>(null);
 
   if (loading) return <div className="card" style={{ color: 'var(--tx2)', fontSize: 13 }}>…</div>;
-  if (!imported || !fs) {
+  if (!imported || !fs || !imp) {
     return (
       <>
         <div className="ptitle" style={{ marginBottom: 14 }}>{t('nav_goals')}</div>
@@ -132,17 +132,36 @@ export default function GoalsPage() {
             </div>
           );
         })()}
+        {fs.monthDeficit > 0 && (
+          <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 'var(--rs)', background: 'color-mix(in srgb, var(--re) 12%, transparent)', color: 'var(--re)', fontSize: 12, fontWeight: 700, lineHeight: 1.4 }}>
+            {fill(t('goals_deficit'), { month: monthLabel(imp.statement_month, lang), amount: fmtEur(fs.monthDeficit) })}
+          </div>
+        )}
         {fs.overAllocated && (
           <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 'var(--rs)', background: 'color-mix(in srgb, var(--re) 12%, transparent)', color: 'var(--re)', fontSize: 12, fontWeight: 700 }}>
-            {fill(t('goals_overalloc'), { amount: fmtEur(Math.abs(fs.unallocated)) })}
+            {fill(t('goals_overalloc'), { amount: fmtEur(fs.overReserved) })}
           </div>
         )}
       </div>
 
       {/* Lista de metas */}
-      {goals.length === 0 && (
-        <div className="card" style={{ marginBottom: 12, fontSize: 12, color: 'var(--tx2)' }}>{t('goals_empty')}</div>
-      )}
+      {goals.length === 0 && (() => {
+        // Primeira vez, sem metas: se o mês fechou com FOLGA, sugere começar a
+        // poupar um valor conservador (metade da folga) — nunca num mês negativo.
+        const surplus = fs.net;
+        if (surplus > 20) {
+          const safe = Math.max(5, Math.round((surplus * 0.5) / 5) * 5);
+          return (
+            <div className="card" style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: 'var(--tx)', fontWeight: 700, lineHeight: 1.5 }}>
+                {fill(t('goals_start_nudge'), { surplus: fmtEur(surplus), safe: fmtEur0(safe) })}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 6 }}>{t('goals_start_note')}</div>
+            </div>
+          );
+        }
+        return <div className="card" style={{ marginBottom: 12, fontSize: 12, color: 'var(--tx2)' }}>{t('goals_empty')}</div>;
+      })()}
       {goals.map((g) => {
         const pct = Math.min(100, Math.round((Number(g.current_eur) / Number(g.target_eur)) * 100));
         const proj = projLine(g.id);
