@@ -255,7 +255,7 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--tx);min-h
 /* Banner do modo demonstração */
 .demo-banner{display:flex;align-items:center;gap:9px;padding:9px 14px;background:color-mix(in srgb,var(--pr) 12%,transparent);border-bottom:1px solid color-mix(in srgb,var(--pr) 22%,transparent);color:var(--pr);font-size:12px;font-weight:700}
 .demo-banner-txt{flex:1;min-width:0}
-.demo-banner-cta{flex-shrink:0;padding:6px 12px;border-radius:20px;border:none;background:var(--pr);color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
+.demo-banner-cta{flex-shrink:0;padding:6px 12px;border-radius:20px;border:none;background:var(--pr);color:var(--bg);font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
 /* Botão "Ver mais análises" — controla a densidade da página de Análise */
 .see-more-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px;margin-bottom:10px;background:var(--card);border:1px solid var(--b);border-radius:var(--rs);color:var(--pr);font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:border-color .15s}
 .see-more-btn:hover{border-color:var(--pr)}

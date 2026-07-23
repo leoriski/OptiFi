@@ -32,9 +32,11 @@
   --card: #ffffff;
   --card2: #f2f4f7;
   --b: #e4e8ef;
-  --tx: #0f1623;
-  --tx2: #566175;
-  --tx3: #8a93a6;
+  /* Texto: preto principal menos carregado; secundários mais escuros (mais
+     próximos do preto) para legibilidade — a hierarquia vem da cor, não do bold. */
+  --tx: #1b2433;
+  --tx2: #414b5c;
+  --tx3: #626c7d;
   --gr: #16a34a;
   --re: #e11d48;
   --ye: #d97706;
