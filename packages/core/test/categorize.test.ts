@@ -7,7 +7,7 @@ describe('Portuguese merchant categorization', () => {
     ['PADARIA CENTRAL', 'alimentacao'],
     ['CONTINENTE BOM DIA', 'alimentacao'],
     ['Salário ACME LDA', 'receita'],
-    ['MB WAY RECEBIDO', 'receita'],
+    ['MB WAY RECEBIDO', 'transferencias'], // MB WAY é pessoa-a-pessoa, nunca ordenado
     ['UBER EATS PT', 'lazer'], // comer fora/delivery é lazer; ganha à regra 'uber'
     ['UBER *TRIP', 'transporte'],
     ['GALP FROTA', 'transporte'],
@@ -57,12 +57,16 @@ describe('descritivos REAIS dos extratos (maiúsculas, sem acentos, prefixos)', 
     ['HOLMES PLACE PORTO', 'subscricoes'],
     ['SOLINCA HEALTH CLUB', 'subscricoes'],
     ['MCFIT MATOSINHOS', 'subscricoes'],
-    // Transferências para pessoas (saída) → transferencias; recebidas → receita
+    // Transferências entre pessoas — dinheiro que circula, nos DOIS sentidos
     ['TRF.IMED. P/ PAULO VICTOR SURIANO', 'transferencias'],
     ['TRF MB WAY P/ DELFIO LUIS OFESSE', 'transferencias'],
     ['TRF. P/O DELFIO LUIS OFESSE', 'transferencias'],
     ['TRF P/ DIOGO ALMEIDA BARROS', 'transferencias'], // "TRF P/ NOME" simples (sem MB WAY, sem ponto)
-    ['TRF.IMED. DE DELFIO LUIS OFESSE', 'receita'],
+    ['TRF.IMED. DE DELFIO LUIS OFESSE-R84994566', 'transferencias'], // entrada P2P ≠ rendimento
+    ['29 Trf Mbway 933XXX415', 'transferencias'],
+    // …mas um ordenado pago por transferência continua a ser rendimento
+    ['TRF CRED SEPA+ ORDENADO DE ASSOCIACAO DA-294667584', 'receita'],
+    ['TRF CRED SEPA+ DE REEMBOLSOS IRS-294301662', 'receita'],
   ])('%s → %s', (name, expected) => {
     expect(categorizeMerchant(name)).toBe(expected);
   });

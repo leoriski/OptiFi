@@ -33,7 +33,18 @@ const GUIDES: Record<Bank, DictKey[]> = {
   outro: ['wiz_guide_outro_1', 'wiz_guide_outro_2', 'wiz_guide_outro_3'],
 };
 
-const FILTER_ORDER: CategoryKey[] = ['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
+const linkBtn: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--tx2)',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'pointer',
+  textDecoration: 'underline',
+  fontFamily: 'Inter,sans-serif',
+};
+
+const FILTER_ORDER: CategoryKey[] =['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
 const MANUAL_CATS: CategoryKey[] = ['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'outros'];
 
 function CatChip({ category }: { category: string }) {
@@ -81,6 +92,24 @@ export default function ActivityPage() {
   const [showSubForm, setShowSubForm] = useState(false);
   const [sName, setSName] = useState('');
   const [sPrice, setSPrice] = useState('');
+
+  // Re-análise dos extratos já importados com as regras atuais
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [reanalyzeMsg, setReanalyzeMsg] = useState('');
+
+  async function reanalyze() {
+    setReanalyzing(true);
+    setReanalyzeMsg('');
+    const res = await fetch('/api/reanalyze', { method: 'POST' });
+    const body = (await res.json().catch(() => ({}))) as { changed?: number };
+    if (!res.ok || body.changed === undefined) setReanalyzeMsg(t('act_reanalyze_error'));
+    else if (body.changed === 0) setReanalyzeMsg(t('act_reanalyze_none'));
+    else {
+      setReanalyzeMsg(fill(t('act_reanalyze_done'), { n: body.changed }));
+      await fin.reload();
+    }
+    setReanalyzing(false);
+  }
 
   async function upload(file: File, withMapping?: typeof mapping) {
     setError('');
@@ -390,7 +419,7 @@ export default function ActivityPage() {
     <>
       {header}
 
-      {/* Banner: extrato importado + re-importar */}
+      {/* Banner: extrato importado + re-analisar + re-importar */}
       <div
         className="card"
         style={{
@@ -399,15 +428,22 @@ export default function ActivityPage() {
           alignItems: 'center',
           padding: '13px 15px',
           background: 'var(--card)',
+          flexWrap: 'wrap',
+          gap: 8,
         }}
       >
         <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--tx2)' }}>{t('act_imported_banner')}</span>
-        <button
-          onClick={() => setWiz('bank')}
-          style={{ background: 'none', border: 'none', color: 'var(--tx2)', fontSize: 12, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Inter,sans-serif' }}
-        >
-          {t('act_reimport_link')}
-        </button>
+        <div style={{ display: 'flex', gap: 14 }}>
+          <button onClick={() => void reanalyze()} disabled={reanalyzing} style={linkBtn}>
+            {reanalyzing ? t('act_reanalyze_busy') : t('act_reanalyze_link')}
+          </button>
+          <button onClick={() => setWiz('bank')} style={linkBtn}>
+            {t('act_reimport_link')}
+          </button>
+        </div>
+        {reanalyzeMsg && (
+          <div style={{ flexBasis: '100%', fontSize: 12, color: 'var(--tx2)' }}>{reanalyzeMsg}</div>
+        )}
       </div>
 
       {/* Tabs Movimentos | Subscrições */}
@@ -613,7 +649,7 @@ export default function ActivityPage() {
                   <div className="tx-item">
                     <CatChip category={tx.category} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="tx-name">{tx.description}</div>
+                      <div className="tx-name">{prettyMerchant(tx.description)}</div>
                       <div className="tx-cat">{t(`cat_${tx.category}` as DictKey)}</div>
                     </div>
                     <div className={`tx-amt${tx.tx_type === 'income' ? ' tx-amt-pos' : ' tx-amt-neg'}`}>

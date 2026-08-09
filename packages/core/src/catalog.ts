@@ -172,7 +172,31 @@ export function matchCatalog(subName: string): CatalogEntry | null {
  * cartões *5297, códigos) e capitaliza. Nunca devolve vazio.
  */
 /** Marcadores de lixo de terminal/POS — só aí se limpa e recapitaliza. */
-const POS_JUNK = /\b(compra|estrang|estrangeiro|pagamento|pagam|mb\s*way|mbway|paypal|sepa|dd|numerario)\b|\*\d|#\d|\b\d{4,}\b|^\s*\d{1,3}\s+\S/i;
+const POS_JUNK = /\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|mb\s*way|mbway|paypal|sepa|dd|numerario)\b|\*\d|#\d|\b\d{4,}\b|^\s*\d{1,3}\s+\S/i;
+
+/** Domínio ou URL colado ao descritivo: "HELP.UBER.COMNL", "BOLT.EU/O/26062721". */
+const DOMAIN = /\b[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?/gi;
+
+/** Marca dentro de um domínio: "help.uber.comnl" → "uber"; "bolt.eu/o/1" → "bolt". */
+function brandFromDomain(token: string): string {
+  const labels = token.split('/')[0]!.split('.').filter(Boolean);
+  return labels.length > 1 ? labels[labels.length - 2]! : (labels[0] ?? '');
+}
+
+/**
+ * Palavras apresentáveis de um descritivo já limpo: tira pontuação órfã, tokens
+ * puramente numéricos (terminais, códigos postais) e repetições — o nome do
+ * comerciante costuma vir colado ao domínio e à localidade.
+ */
+function pickWords(input: string): string[] {
+  const out: string[] = [];
+  for (const token of input.toLowerCase().split(/\s+/)) {
+    const w = token.replace(/^[-–—.,:;*#/|]+|[-–—.,:;*#/|]+$/g, '');
+    if (w === '' || /^[\d-]+$/.test(w) || out.includes(w)) continue;
+    out.push(w);
+  }
+  return out;
+}
 
 export function prettyMerchant(raw: string): string {
   const entry = matchCatalog(raw || '');
@@ -180,22 +204,23 @@ export function prettyMerchant(raw: string): string {
   const orig = (raw || '').replace(/\s+/g, ' ').trim();
   // Nome já limpo (sem lixo de POS) → mantém tal e qual (não mexe em maiúsculas).
   if (orig === '' || !POS_JUNK.test(orig)) return orig || 'Movimento';
-  let s = orig
+  const s = orig
     .replace(/\*\d+/g, ' ') // cartões / refs *5297
     .replace(/#\d+/g, ' ')
-    .replace(/\b(compra|estrang|estrangeiro|pagamento|pagam|pag|trf|mb\s*way|mbway|paypal|sepa|debito directo|debito direto|dd|lev|levantamento|numerario)\b/gi, ' ')
+    .replace(/\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|pag|trf|mb\s*way|mbway|paypal|sepa|d[ée]bito\s+dire[ct]?to|dd|lev|levantamento|numerario)\b/gi, ' ')
+    .replace(/\bp\/o?(?=\s|$)/gi, ' ') // "p/" e "p/o" ("para o") das transferências
+    .replace(DOMAIN, (d) => ` ${brandFromDomain(d)} `) // "help.uber.comnl" → "uber"
     .replace(/\b\d{4,}\b/g, ' ') // ids/terminais longos
     .replace(/^\s*\d{1,3}\s+/, '') // código curto à cabeça ("18 FITNESS…")
     .replace(/[*#/|]+/g, ' ')
+    .replace(/(^|\s)[-–—.,:;]+(?=\s|$)/g, ' ') // pontuação órfã deixada pela limpeza
     .replace(/\s+/g, ' ')
     .trim();
-  if (s === '') s = orig;
-  s = s
-    .toLowerCase()
-    .split(' ')
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
-    .join(' ');
-  return s.slice(0, 32).trim() || 'Movimento';
+  let words = pickWords(s);
+  // Limpeza agressiva demais (ex.: "LEVANTAMENTO DE NUMERARIO-5297" ficaria só
+  // "De"): volta ao descritivo cru, sem os identificadores longos.
+  if (words.join('').length < 3) words = pickWords(orig.replace(/\b\d{4,}\b/g, ' '));
+  return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ').slice(0, 32).trim() || 'Movimento';
 }
 
 /** Tipo de serviço, incluindo os que não têm entrada no catálogo. */

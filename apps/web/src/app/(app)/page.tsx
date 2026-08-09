@@ -241,6 +241,27 @@ export default function HomePage() {
       {importReminder}
       {tipCard}
 
+      {/* Défice do mês fechado — a Home não pode prometer poupança sem dizer
+          primeiro que o mês fechou a vermelho. Vem antes do Money Leak e diz
+          se os cortes propostos chegam (ou não) para equilibrar. */}
+      {fs.monthDeficit > 0 && (
+        <div className="card" style={{ marginBottom: 13, borderLeft: '3px solid var(--re)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.6px', color: 'var(--re)' }}>{t('home_deficit_lbl')}</div>
+            <div className="leak-month-badge">{pastMonth}</div>
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--re)', lineHeight: 1.1, marginBottom: 5 }}>−{fmtEur(fs.monthDeficit)}</div>
+          <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5 }}>
+            {fill(t('home_deficit_sub'), { month: pastMonth })}{' '}
+            {fs.leakTotal <= 0
+              ? t('home_deficit_nofix')
+              : fs.leakTotal >= fs.monthDeficit
+                ? fill(t('home_deficit_covered'), { amount: fmtEur(fs.leakTotal) })
+                : fill(t('home_deficit_partial'), { amount: fmtEur(fs.leakTotal), rest: fmtEur(fs.monthDeficit - fs.leakTotal) })}
+          </div>
+        </div>
+      )}
+
       {/* Money Leak */}
       {fs.leakTotal > 0 ? (
         <div className="money-leak-card">
@@ -272,7 +293,7 @@ export default function HomePage() {
             {t('leak_cta')} →
           </button>
         </div>
-      ) : (
+      ) : fs.monthDeficit > 0 ? null : ( // "não perdeste dinheiro" seria falso num mês em défice
         <div className="leak-optimized">
           <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
             <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--tx)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

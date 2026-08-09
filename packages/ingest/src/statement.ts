@@ -1,8 +1,69 @@
-import { categorizeMerchant } from '@optifi/core';
+import { categorizeMerchant, type CategoryKey } from '@optifi/core';
 import type { CategorizedTransaction, ParsedTransaction, StatementSummary } from './types.js';
 import { IngestError } from './types.js';
 import { assignFingerprints } from './fingerprint.js';
 import { normalizeDescription } from './values.js';
+
+/** Formato do Millennium: dia + código + contraparte ("29 TRF Isabel Jorge Camb"). */
+const PEER_TRANSFER = /^\d{1,2}\s+(?:trf|tfi)\s+\S/;
+
+/** Nome da contraparte num descritivo de transferência, sem código nem referência. */
+function counterparty(description: string): string {
+  return normalizeDescription(description)
+    .replace(/^\d{1,2}\s+/, '')
+    .replace(/^(?:trf\.?imed\.?|trf\.?|tfi|mb ?way)\s*/, '')
+    .replace(/^(?:mb ?way\s*)?(?:p\/o|p\/|para|de)\s+/, '')
+    .replace(/-[a-z]?\d+\s*$/, '')
+    .replace(/[^a-z ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Categoriza um extrato INTEIRO. Precisa do extrato completo (e não de cada
+ * movimento isolado) por causa das transferências no formato do Millennium
+ * ("29 TRF Isabel Jorge Camb"), em que o descritivo é só dia + código +
+ * contraparte e não diz se é pessoa ou empresa:
+ * · nas SAÍDAS é sempre dinheiro enviado a uma contraparte → transferência;
+ * · nas ENTRADAS não se pode adivinhar — um ordenado chega no mesmo formato
+ *   ("29 TFI PLANO INCLINADO I"). Só vira transferência quando a MESMA
+ *   contraparte também recebeu dinheiro nosso no extrato, sinal claro de ser
+ *   alguém com quem trocamos dinheiro. Na dúvida fica rendimento: preferimos
+ *   contar a mais a inventar um défice que não existe.
+ *
+ * Nas ENTRADAS, um descritivo de transferência entre pessoas (ex.: "TRF.IMED.
+ * DE João" = um amigo a devolver) NÃO é rendimento. Tudo o resto que entra é
+ * 'receita' (salário, depósito, reembolso…), mesmo com descritivo desconhecido.
+ */
+export function categorizeStatement<T extends { description: string; type: 'income' | 'expense' }>(
+  txs: T[],
+): (T & { category: CategoryKey })[] {
+  const out = txs.map((tx) => {
+    const cat = categorizeMerchant(tx.description);
+    const category: CategoryKey =
+      tx.type === 'income'
+        ? cat === 'transferencias'
+          ? 'transferencias'
+          : 'receita'
+        : PEER_TRANSFER.test(normalizeDescription(tx.description))
+          ? 'transferencias'
+          : cat;
+    return { ...tx, category };
+  });
+
+  const paidOut = new Set(
+    out
+      .filter((t) => t.type === 'expense' && t.category === 'transferencias')
+      .map((t) => counterparty(t.description))
+      .filter((n) => n.length >= 6 && n.includes(' ')),
+  );
+  for (const tx of out) {
+    if (tx.type !== 'income' || tx.category !== 'receita') continue;
+    if (!PEER_TRANSFER.test(normalizeDescription(tx.description))) continue;
+    if (paidOut.has(counterparty(tx.description))) tx.category = 'transferencias';
+  }
+  return out;
+}
 
 /**
  * Constrói o resumo do mês fechado a partir dos movimentos normalizados:
@@ -24,14 +85,7 @@ export function buildStatement(txs: ParsedTransaction[], endingBalance?: number)
 
   const monthTxs = txs.filter((t) => t.date.startsWith(statementMonth));
   const withFp = assignFingerprints(monthTxs);
-  // Categoriza pelo descritivo. Nas ENTRADAS, o descritivo pode revelar uma
-  // transferência entre pessoas (ex.: "TRF. P/O João" = um amigo a devolver) —
-  // essa NÃO é rendimento; fica em 'transferencias'. Tudo o resto que entra é
-  // 'receita' (salário, depósito, reembolso…), mesmo com descritivo desconhecido.
-  const transactions: CategorizedTransaction[] = withFp.map((tx) => {
-    const cat = categorizeMerchant(tx.description);
-    return { ...tx, category: tx.type === 'income' ? (cat === 'transferencias' ? 'transferencias' : 'receita') : cat };
-  });
+  const transactions: CategorizedTransaction[] = categorizeStatement(withFp);
 
   // Transferências entre pessoas (dinheiro que apenas circula) NÃO são nem
   // rendimento nem consumo — ficam fora dos totais que alimentam a análise

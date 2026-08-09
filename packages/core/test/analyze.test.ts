@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateAnalysis } from '../src/analyze.js';
+import { prettyMerchant } from '../src/catalog.js';
 import type { Subscription } from '../src/index.js';
 
 const subs = (list: Partial<Subscription>[]): Subscription[] =>
@@ -203,5 +204,25 @@ describe('projeção de investimento nas fugas', () => {
     const ins = a.insights.find((i) => i.planItemId === item.id)!;
     expect(ins.params.fv10).toBe(item.fv10);
     expect(ins.params.rate).toBe(7);
+  });
+});
+
+describe('prettyMerchant: descritivos crus dos bancos ficam legíveis', () => {
+  it.each([
+    // Domínio colado ao nome → só a marca, sem repetir
+    ['COMPRA 2088 UBER TRIP HELP.UBER.COMNL', 'Uber Trip'],
+    ['COMPRA ESTRANG*5297 BOLT.EU/O/2606272120', 'Bolt'],
+    // Marcadores do banco e identificadores longos desaparecem
+    ['DÉBITO DIRETO-AEGON SANTANDER -102138947', 'Aegon Santander'],
+    ['PAGSERV VODAFONE PORTUGAL COMU 10297/458919388', 'Vodafone Portugal Comu'],
+    ['COMPRA 2088 CONTINENTE PORTO 0000-000 PORTO', 'Continente Porto'],
+    ['TRF MB WAY P/ DELFIO LUIS OFESSE', 'Delfio Luis Ofesse'],
+    // Sem lixo → fica exatamente como veio
+    ['Pingo Doce Lisboa', 'Pingo Doce Lisboa'],
+    // Limpar tudo deixaria o nome sem sentido → volta ao descritivo
+    ['LEVANTAMENTO DE NUMERARIO-5297', 'Levantamento De Numerario'],
+    ['', 'Movimento'],
+  ])('%s → %s', (rawDesc, expected) => {
+    expect(prettyMerchant(rawDesc)).toBe(expected);
   });
 });

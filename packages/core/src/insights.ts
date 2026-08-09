@@ -124,7 +124,8 @@ function renegotiableCandidates(ctx: SmartContext): { name: string; saving: numb
 function renegotiateServices(ctx: SmartContext): Insight[] {
   const cands = renegotiableCandidates(ctx);
   if (cands.length < 2) return [];
-  const [a, b] = cands;
+  const a = cands[0]!;
+  const b = cands[1]!;
   const monthly = round2(a.saving + b.saving);
   const annual = round2(monthly * 12);
   if (annual < RENEG_MIN_ANNUAL) return [];
@@ -314,7 +315,7 @@ function spendingObservations(ctx: SmartContext): Insight[] {
   if (exp.length < 6 || consumption <= 0) return out;
 
   // Ritmo diário: consumo / dias do mês analisado.
-  const days = daysInMonthOf(exp[0].date);
+  const days = daysInMonthOf(exp[0]!.date);
   if (days > 0) {
     const perDay = round2(consumption / days);
     if (perDay > 0) out.push({ id: 'daily_avg', kind: 'alert', saving: 0, params: { amount: perDay, days } });

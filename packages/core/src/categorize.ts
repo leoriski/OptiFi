@@ -18,11 +18,16 @@ function norm(s: string): string {
 // antes: 'uber eats' (comida) e 'uber one' (subscrição) precedem 'uber'
 // (transporte); a categoria vem sempre do que o descritivo revela.
 export const MERCHANT_RULES: MerchantRule[] = [
-  { key: 'receita', patterns: ['salario', 'vencimento', 'venc ', 'ordenado', 'transferencia recebida', 'trf.imed. de', 'trf mb way de', 'mb way recebido', 'reembolso', 'subsidio', 'salary', 'payroll', 'trf cred sepa'] },
+  // Rendimento verdadeiro. Vem primeiro para que um ordenado pago por
+  // transferência ("TRF CRED SEPA+ ORDENADO DE …") nunca seja confundido com
+  // uma transferência entre pessoas.
+  { key: 'receita', patterns: ['salario', 'vencimento', 'venc ', 'ordenado', 'reembolso', 'subsidio', 'pensao', 'salary', 'payroll', 'trf cred sepa', 'transferencia recebida'] },
 
-  // Transferências para PESSOAS (dinheiro que sai mas não é consumo/desperdício)
-  // — não geram fuga. Só as SAÍDAS: 'trf ... p/', 'trf. p/o', 'mb way p/'.
-  { key: 'transferencias', patterns: ['trf.imed. p/', 'trf. p/o', 'trf mb way p/', 'trf p/', 'transferencia p/', 'transferencia para', 'mb way p/', 'trf imediata p'] },
+  // Transferências entre PESSOAS: dinheiro que apenas circula — nem consumo
+  // nem rendimento — em QUALQUER direção. O MB WAY e a transferência imediata
+  // são instrumentos pessoa-a-pessoa (um ordenado chega sempre por
+  // 'TRF CRED SEPA', nunca por aqui), por isso contam nos dois sentidos.
+  { key: 'transferencias', patterns: ['trf.imed. p/', 'trf.imed. de', 'trf imediata p', 'trf. p/o', 'trf p/', 'transferencia p/', 'transferencia para', 'trf mb way', 'trf mbway', 'mb way p/', 'mb way de', 'mb way recebido'] },
 
   // Alimentação = comida ESSENCIAL (supermercado/mercearia). Comer fora é lazer.
   { key: 'alimentacao', patterns: ['pingo doce', 'continente', 'lidl', 'aldi', 'intermarche', 'minipreco', 'auchan', 'jumbo', 'mercadona', 'el corte ingles', 'supermercado', 'mercado', 'frutaria', 'talho', 'mercearia', 'padaria'] },

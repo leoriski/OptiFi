@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ingestStatement, assignFingerprints, IngestError } from '../src/index.js';
+import { ingestStatement, assignFingerprints, categorizeStatement, IngestError } from '../src/index.js';
 import { REVOLUT_CSV, CGD_CSV, UNKNOWN_CSV } from './fixtures/statements.js';
 
 const enc = new TextEncoder();
@@ -46,6 +46,17 @@ TRANSFER,Current,2026-05-08 11:00:00,2026-05-08 11:00:01,Salario ACME,900.00,0.0
     expect(summary.expenses).toBeCloseTo(42.17, 2); // só o supermercado, não a transferência enviada (30)
     expect(summary.transactions.find((t) => t.description.includes('Joao'))!.category).toBe('transferencias');
     expect(summary.transactions.find((t) => t.description.includes('Maria'))!.category).toBe('transferencias');
+  });
+
+  it('formato "29 TRF Nome" do Millennium: saída é transferência; entrada só se for a mesma pessoa', () => {
+    const txs = categorizeStatement([
+      { description: '29 TRF Isabel Jorge Camb', type: 'expense' as const },
+      { description: '06 TFI Isabel Jorge Camb', type: 'income' as const },
+      { description: '29 TFI PLANO INCLINADO I', type: 'income' as const },
+    ]);
+    expect(txs[0]!.category).toBe('transferencias'); // enviámos-lhe dinheiro
+    expect(txs[1]!.category).toBe('transferencias'); // a MESMA pessoa devolveu
+    expect(txs[2]!.category).toBe('receita'); // contraparte desconhecida → rendimento
   });
 
   it('bankHint errado não força um parse errado — a deteção manda', () => {
