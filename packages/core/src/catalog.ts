@@ -172,7 +172,7 @@ export function matchCatalog(subName: string): CatalogEntry | null {
  * cartões *5297, códigos) e capitaliza. Nunca devolve vazio.
  */
 /** Marcadores de lixo de terminal/POS — só aí se limpa e recapitaliza. */
-const POS_JUNK = /\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|mb\s*way|mbway|paypal|sepa|dd|numerario)\b|\*\d|#\d|\b\d{4,}\b|^\s*\d{1,3}\s+\S/i;
+const POS_JUNK = /\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|trf|tfi|contactless|mb\s*way|mbway|paypal|sepa|dd|numerario)\b|\*\d|#\d|\b\d{4,}\b|^\s*\d{1,3}\s+\S/i;
 
 /** Domínio ou URL colado ao descritivo: "HELP.UBER.COMNL", "BOLT.EU/O/26062721". */
 const DOMAIN = /\b[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?/gi;
@@ -207,7 +207,7 @@ export function prettyMerchant(raw: string): string {
   const s = orig
     .replace(/\*\d+/g, ' ') // cartões / refs *5297
     .replace(/#\d+/g, ' ')
-    .replace(/\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|pag|trf|mb\s*way|mbway|paypal|sepa|d[ée]bito\s+dire[ct]?to|dd|lev|levantamento|numerario)\b/gi, ' ')
+    .replace(/\b(compra|estrang|estrangeiro|pagamento|pagam|pagserv|pag|trf|tfi|contactless|mb\s*way|mbway|paypal|sepa|d[ée]bito\s+dire[ct]?to|dd|lev|levantamento|numerario)\b/gi, ' ')
     .replace(/\bp\/o?(?=\s|$)/gi, ' ') // "p/" e "p/o" ("para o") das transferências
     .replace(DOMAIN, (d) => ` ${brandFromDomain(d)} `) // "help.uber.comnl" → "uber"
     .replace(/\b\d{4,}\b/g, ' ') // ids/terminais longos

@@ -85,6 +85,8 @@ export default function HomePage() {
   const [showHow, setShowHow] = useState(false);
   const [balanceInput, setBalanceInput] = useState('');
   const [editingBalance, setEditingBalance] = useState(false);
+  const [mealInput, setMealInput] = useState('');
+  const [editingMeal, setEditingMeal] = useState(false);
 
   const hour = new Date().getHours();
   const greetKey: DictKey = hour < 12 ? 'greeting_morning' : hour < 20 ? 'greeting_afternoon' : 'greeting_evening';
@@ -200,6 +202,20 @@ export default function HomePage() {
     await fin.setBalance(v);
     setEditingBalance(false);
     setBalanceInput('');
+  };
+
+  const saveMeal = async () => {
+    const v = parseFloat(mealInput.replace(',', '.'));
+    if (Number.isNaN(v) || v < 0) return;
+    await fin.setMealCardValue(v);
+    setEditingMeal(false);
+    setMealInput('');
+  };
+
+  const clearMeal = async () => {
+    await fin.setMealCardValue(0);
+    setEditingMeal(false);
+    setMealInput('');
   };
 
   // Próxima meta (prazo mais próximo, por atingir)
@@ -379,13 +395,62 @@ export default function HomePage() {
         <CashflowChart points={chartPoints} labels={chartLabels} />
       </div>
 
-      {/* CARTÃO REFEIÇÃO — pote próprio: recebes X, gastaste Y, restam Z */}
-      {fs.mealCard && (
-        <div className="card" style={{ marginBottom: 13 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-            <div style={{ fontSize: 11, color: 'var(--tx3)', fontWeight: 800, letterSpacing: '.6px' }}>{t('meal_home_lbl')}</div>
+      {/* CARTÃO REFEIÇÃO — pote próprio: recebes X, gastaste Y, restam Z.
+          O valor mensal edita-se aqui, ao lado dos números que explica. */}
+      <div className="card" style={{ marginBottom: 13 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10, gap: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--tx3)', fontWeight: 800, letterSpacing: '.6px' }}>{t('meal_home_lbl')}</div>
+          {editingMeal ? (
             <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{currMonth}</div>
-          </div>
+          ) : (
+            <button
+              onClick={() => {
+                setMealInput(fin.mealCard > 0 ? String(fin.mealCard) : '');
+                setEditingMeal(true);
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--pr)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter,sans-serif', padding: 0 }}
+            >
+              {fs.mealCard ? t('meal_home_edit') : t('meal_home_set')}
+            </button>
+          )}
+        </div>
+
+        {editingMeal ? (
+          <>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 6 }}>{t('meal_card_lbl')}</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="auth-input"
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={mealInput}
+                autoFocus
+                onChange={(e) => setMealInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void saveMeal();
+                }}
+              />
+              <button className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: 13 }} onClick={() => void saveMeal()}>
+                {t('meal_card_save')}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button className="btn-secondary" style={{ padding: 10, fontSize: 12 }} onClick={() => setEditingMeal(false)}>
+                {t('goal_cancel')}
+              </button>
+              {fin.mealCard > 0 && (
+                <button className="btn-secondary" style={{ padding: 10, fontSize: 12, color: 'var(--re)' }} onClick={() => void clearMeal()}>
+                  {t('meal_card_clear')}
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--tx3)', marginTop: 10, lineHeight: 1.5 }}>{t('meal_card_note')}</div>
+          </>
+        ) : !fs.mealCard ? (
+          <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5 }}>{t('meal_home_empty')}</div>
+        ) : (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
             <div>
               <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{t('meal_home_in')}</div>
@@ -414,8 +479,9 @@ export default function HomePage() {
             </div>
           )}
           <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 8 }}>{t('meal_home_note')}</div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {/* QUANTO PODES GASTAR — um só modelo, ligado ao saldo real */}
       <div className="card" style={{ borderColor: 'color-mix(in srgb,var(--pr) 25%,transparent)' }}>

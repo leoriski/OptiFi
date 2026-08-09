@@ -217,6 +217,8 @@ describe('prettyMerchant: descritivos crus dos bancos ficam legíveis', () => {
     ['PAGSERV VODAFONE PORTUGAL COMU 10297/458919388', 'Vodafone Portugal Comu'],
     ['COMPRA 2088 CONTINENTE PORTO 0000-000 PORTO', 'Continente Porto'],
     ['TRF MB WAY P/ DELFIO LUIS OFESSE', 'Delfio Luis Ofesse'],
+    ['TRF. P/O DELFIO LUIS OFESSE', 'Delfio Luis Ofesse'],
+    ['SNIPES VILA NOVA D CONTACTLESS', 'Snipes Vila Nova D'],
     // Sem lixo → fica exatamente como veio
     ['Pingo Doce Lisboa', 'Pingo Doce Lisboa'],
     // Limpar tudo deixaria o nome sem sentido → volta ao descritivo

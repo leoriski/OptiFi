@@ -20,7 +20,7 @@ const SUPPORT_EMAIL = 'synamade12@gmail.com';
 
 type Mode = 'dark' | 'light';
 type Accent = 'brand' | 'amber' | 'violet' | 'emerald';
-type DrawerId = null | 'lang' | 'name' | 'theme' | 'security' | 'notif' | 'meal' | 'help' | 'about';
+type DrawerId = null | 'lang' | 'name' | 'theme' | 'security' | 'notif' | 'help' | 'about';
 
 const ACCENTS: { id: Accent; labelKey: DictKey; swatch: string }[] = [
   { id: 'brand', labelKey: 'accent_brand', swatch: 'linear-gradient(135deg,#0f1623,#9aa7bd)' },
@@ -72,15 +72,6 @@ function ItemIcon({ kind }: { kind: Exclude<DrawerId, null> }) {
         <>
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-        </>
-      ),
-    },
-    meal: {
-      color: 'var(--tx2)',
-      path: (
-        <>
-          <rect x="2" y="6" width="20" height="13" rx="2" />
-          <path d="M2 10h20M6 15h5" />
         </>
       ),
     },
@@ -165,7 +156,6 @@ export default function ProfilePage() {
   // começar em false garante que o HTML do servidor e do cliente coincidem
   // (evita o hydration mismatch no toggle).
   const [pushCanUse, setPushCanUse] = useState(false);
-  const [mealCard, setMealCard] = useState<number>(0);
   useEffect(() => {
     setPushCanUse(pushSupported());
     void isPushEnabled().then(setPushOn);
@@ -181,24 +171,12 @@ export default function ProfilePage() {
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''));
     void supabase
       .from('profiles')
-      .select('name,meal_card_eur')
+      .select('name')
       .limit(1)
-      .then(({ data, error }) => {
-        if (error) {
-          // meal_card_eur pode não existir (migração 0006) — tenta só o nome.
-          void supabase.from('profiles').select('name').limit(1).then(({ data: d2 }) => {
-            const n = (d2?.[0]?.name as string | null) ?? '';
-            setName(n);
-            setNameDraft(n);
-          });
-          return;
-        }
-        const row = data?.[0] as { name?: string | null; meal_card_eur?: number | null } | undefined;
-        const n = row?.name ?? '';
+      .then(({ data }) => {
+        const n = (data?.[0]?.name as string | null) ?? '';
         setName(n);
         setNameDraft(n);
-        const mc = row?.meal_card_eur != null ? Number(row.meal_card_eur) : 0;
-        setMealCard(mc);
       });
   }, []);
 
@@ -212,18 +190,6 @@ export default function ProfilePage() {
     document.documentElement.setAttribute('data-accent', a);
     localStorage.setItem('optifi_accent', a);
     setAccent(a);
-  }
-
-  async function saveMealCard(value: number) {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    // NaN serializa para null no JSON e apagava o valor — proteger explicitamente.
-    if (!user || Number.isNaN(value) || value < 0) return;
-    await supabase.from('profiles').update({ meal_card_eur: value }).eq('id', user.id);
-    setMealCard(value);
-    setDrawer(null);
   }
 
   async function saveName() {
@@ -351,12 +317,6 @@ export default function ProfilePage() {
         <SettingsItem kind="theme" title={t('si_theme')} sub={`${modeLabel}${t('theme_sub_sep')}${accentLabel}`} onClick={() => setDrawer('theme')} />
         <SettingsItem kind="security" title={t('si_security')} sub={t('si_security_sub')} onClick={() => setDrawer('security')} />
         <SettingsItem kind="notif" title={t('si_notif')} sub={t('si_notif_sub')} onClick={() => setDrawer('notif')} />
-        <SettingsItem
-          kind="meal"
-          title={t('meal_card_title')}
-          sub={mealCard > 0 ? fill(t('meal_card_active'), { amount: `€${mealCard.toFixed(2)}` }) : t('meal_card_none')}
-          onClick={() => setDrawer('meal')}
-        />
       </div>
 
       <div className="card" style={group}>
@@ -457,41 +417,6 @@ export default function ProfilePage() {
 
       <Drawer open={drawer === 'security'} onClose={() => setDrawer(null)} title={t('si_security')} sub={t('si_security_sub')}>
         <SecuritySection />
-      </Drawer>
-
-      <Drawer open={drawer === 'meal'} onClose={() => setDrawer(null)} title={t('meal_card_title')} sub={t('meal_card_sub')}>
-        <div className="card">
-          <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.6, marginBottom: 12 }}>{t('meal_card_note')}</div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 6 }}>{t('meal_card_lbl')}</label>
-          {/* Não-controlado: o valor vive no DOM, lido por id no clique — imune a
-              dessincronizações de estado e a problemas de attachment de ref. */}
-          <input
-            id="mealCardInput"
-            key={`meal-${mealCard}`}
-            className="auth-input"
-            type="number"
-            inputMode="decimal"
-            placeholder="176"
-            defaultValue={mealCard > 0 ? String(mealCard) : ''}
-            style={{ marginBottom: 12 }}
-          />
-          <button
-            className="btn-primary"
-            style={{ padding: 12, fontSize: 13 }}
-            onClick={() => {
-              const el = document.getElementById('mealCardInput') as HTMLInputElement | null;
-              const v = parseFloat((el?.value ?? '').replace(',', '.'));
-              if (v >= 0) void saveMealCard(v);
-            }}
-          >
-            {t('meal_card_save')}
-          </button>
-          {mealCard > 0 && (
-            <button className="btn-secondary" style={{ padding: 11, fontSize: 12, marginTop: 8, color: 'var(--re)' }} onClick={() => void saveMealCard(0)}>
-              {t('meal_card_clear')}
-            </button>
-          )}
-        </div>
       </Drawer>
 
       <Drawer open={drawer === 'notif'} onClose={() => setDrawer(null)} title={t('si_notif')} sub={t('notif_note')}>
