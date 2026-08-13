@@ -276,3 +276,61 @@
 .wiz-upload-zone {
   border-color: var(--b);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PWA / telemóvel
+   Com viewport-fit=cover a página passa a desenhar por baixo do notch e do
+   indicador de home do iPhone — as margens seguras passam a ser nossas.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Barra inferior: o indicador de home do iPhone tapava os ícones. */
+.nav-inner {
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+}
+/* O conteúdo tem de acabar acima da nav, que agora é mais alta. */
+.main {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  padding-left: calc(12px + env(safe-area-inset-left));
+  padding-right: calc(12px + env(safe-area-inset-right));
+}
+/* Instalada, a app desenha por baixo da barra de estado: baixa o cabeçalho. */
+.hdr {
+  padding-top: calc(9px + env(safe-area-inset-top));
+}
+/* Gavetas coladas ao fundo do ecrã. */
+.sp-body {
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+.toast {
+  bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+/* O iOS dá zoom sozinho a qualquer campo com menos de 16px. Em vez de proibir
+   o zoom (que quem vê mal precisa), sobe-se a letra dos campos no telemóvel. */
+@media (pointer: coarse) {
+  .auth-input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Toques sem o flash cinzento do Android e sem seleção acidental de texto ao
+   arrastar — os números continuam selecionáveis. */
+button,
+.nb,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+.nb {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Evita que o overscroll dentro de uma gaveta arraste a página por trás.
+   Fica em 'contain' e não 'none' de propósito: o puxar-para-recarregar do
+   Android continua a funcionar, e é a forma mais simples de recuperar. */
+body {
+  overscroll-behavior-y: contain;
+}

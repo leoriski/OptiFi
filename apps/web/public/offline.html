@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0e14" />
+    <title>OptiFi</title>
+    <style>
+      /* Sem ligação não há fontes nem CSS externo: tudo tem de vir daqui. */
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 24px calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+        background: #0b0e14;
+        color: #f4f7fb;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+      }
+      img { width: 64px; height: 64px; border-radius: 16px; }
+      h1 { font-size: 19px; font-weight: 800; margin: 0; }
+      p { font-size: 14px; line-height: 1.6; color: #9aa7bd; margin: 0; max-width: 34ch; }
+      button {
+        margin-top: 6px;
+        padding: 13px 26px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 800;
+        color: #fff;
+        background: #1a6bff;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="/icon-192.png" alt="OptiFi" />
+    <h1 id="t">Sem ligação à internet</h1>
+    <p id="s">A OptiFi precisa de ligação para ir buscar os teus números. Ligados os dados ou o Wi-Fi, tenta outra vez.</p>
+    <button id="b" onclick="location.reload()">Tentar outra vez</button>
+    <script>
+      // A língua escolhida na app vive no cookie optifi_lang; só quando não
+      // existe (ainda não entrou) é que se usa a do telemóvel.
+      var m = document.cookie.match(/(?:^|; )optifi_lang=([^;]*)/);
+      var lang = m ? decodeURIComponent(m[1]) : (navigator.language || '').slice(0, 2);
+      if (lang === 'en') {
+        document.documentElement.lang = 'en';
+        document.getElementById('t').textContent = 'No internet connection';
+        document.getElementById('s').textContent = 'OptiFi needs a connection to fetch your numbers. Turn on mobile data or Wi-Fi and try again.';
+        document.getElementById('b').textContent = 'Try again';
+      }
+    </script>
+  </body>
+</html>
