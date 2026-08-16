@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
 // Rotas acessíveis sem sessão. Tudo o resto exige utilizador autenticado.
-const PUBLIC_PATHS = ['/login', '/signup', '/forgot', '/update-password', '/verify', '/auth', '/privacidade', '/termos'];
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot', '/update-password', '/verify', '/auth', '/privacidade', '/termos', '/landing'];
 // Recursos que têm de ser acessíveis sem sessão: o service worker (ficheiro
 // estático), o manifest da PWA (o browser lê-o sem cookies antes de instalar)
 // e o job de lembretes (protegido pelo próprio CRON_SECRET).

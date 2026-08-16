@@ -1,0 +1,568 @@
+/* Landing pública da OptiFi. Página de marketing: vive sempre no tema escuro,
+   independentemente do modo guardado pelo utilizador, por isso define as suas
+   próprias variáveis em vez de herdar as do tema da app. */
+
+.lp {
+  --lp-bg: #0b0e14;
+  --lp-card: #161b26;
+  --lp-card2: #1d2330;
+  --lp-b: #262d3d;
+  --lp-tx: #f4f7fb;
+  --lp-tx2: #9aa7bd;
+  --lp-tx3: #5c6781;
+  background: var(--lp-bg);
+  color: var(--lp-tx);
+  font-family: Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.lp * {
+  box-sizing: border-box;
+}
+
+/* Os links do menu apontam para âncoras: a barra fixa não pode tapar o título. */
+.lp [id] {
+  scroll-margin-top: 84px;
+}
+
+.lp-wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Navegação ── */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--lp-bg) 82%, transparent);
+  backdrop-filter: saturate(140%) blur(14px);
+  border-bottom: 1px solid var(--lp-b);
+}
+
+.lp-nav-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-nav-link {
+  color: var(--lp-tx2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 10px;
+}
+
+.lp-nav-link:hover {
+  color: var(--lp-tx);
+}
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 18px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.lp-btn:active {
+  transform: translateY(1px);
+}
+
+.lp-btn-primary {
+  background: var(--lp-tx);
+  color: var(--lp-bg);
+}
+
+.lp-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.lp-btn-ghost {
+  background: var(--lp-card);
+  color: var(--lp-tx);
+  border-color: var(--lp-b);
+}
+
+.lp-btn-ghost:hover {
+  background: var(--lp-card2);
+}
+
+.lp-btn-lg {
+  font-size: 15px;
+  padding: 14px 24px;
+  border-radius: 14px;
+}
+
+/* ── Hero ── */
+.lp-hero {
+  position: relative;
+  padding: 72px 0 24px;
+  text-align: center;
+}
+
+.lp-hero::before {
+  /* halo suave por trás dos telemóveis */
+  content: '';
+  position: absolute;
+  inset: -10% 50% auto auto;
+  transform: translateX(50%);
+  width: min(900px, 120%);
+  height: 620px;
+  right: 50%;
+  background: radial-gradient(ellipse at center, rgba(154, 167, 189, 0.13), transparent 65%);
+  pointer-events: none;
+}
+
+.lp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lp-tx2);
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+
+.lp-h1 {
+  font-size: clamp(34px, 6vw, 56px);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  margin: 22px 0 0;
+  position: relative;
+}
+
+.lp-h1 em {
+  font-style: normal;
+  color: var(--lp-tx2);
+}
+
+.lp-sub {
+  font-size: clamp(15px, 2vw, 18px);
+  line-height: 1.6;
+  color: var(--lp-tx2);
+  max-width: 620px;
+  margin: 18px auto 0;
+  position: relative;
+}
+
+.lp-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 28px;
+  position: relative;
+}
+
+.lp-note {
+  font-size: 12.5px;
+  color: var(--lp-tx3);
+  margin-top: 14px;
+  position: relative;
+}
+
+/* ── Telemóveis ── */
+.lp-phone {
+  position: relative;
+  width: 100%;
+  max-width: 268px;
+  aspect-ratio: 393 / 852;
+  border-radius: 46px;
+  padding: 9px;
+  background: linear-gradient(160deg, #414755 0%, #1b1f28 42%, #0d1016 100%);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.14) inset,
+    0 30px 70px -22px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+  flex: none;
+}
+
+.lp-phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 38px;
+  overflow: hidden;
+  background: var(--lp-bg);
+}
+
+.lp-phone-screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.lp-island {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30%;
+  height: 22px;
+  background: #05070b;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+.lp-phones {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  margin-top: 52px;
+  padding-bottom: 8px;
+}
+
+.lp-phones .lp-phone-side {
+  max-width: 226px;
+  opacity: 0.9;
+}
+
+.lp-phones .lp-phone-side:first-child {
+  transform: rotate(-4deg) translateY(18px);
+}
+
+.lp-phones .lp-phone-side:last-child {
+  transform: rotate(4deg) translateY(18px);
+}
+
+/* ── Faixa de confiança ── */
+.lp-trust {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 56px 0 0;
+}
+
+.lp-trust-item {
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 16px;
+  padding: 18px 18px 20px;
+}
+
+.lp-trust-item h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 12px 0 6px;
+}
+
+.lp-trust-item p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--lp-tx2);
+  margin: 0;
+}
+
+.lp-ico {
+  color: var(--lp-tx2);
+}
+
+/* ── Secções ── */
+.lp-section {
+  padding: 96px 0 0;
+}
+
+.lp-kicker {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lp-tx3);
+  margin: 0 0 10px;
+}
+
+.lp-h2 {
+  font-size: clamp(26px, 3.6vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.lp-lead {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--lp-tx2);
+  margin: 0;
+}
+
+.lp-feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 56px;
+  padding: 56px 0;
+  border-top: 1px solid var(--lp-b);
+}
+
+.lp-feature:first-of-type {
+  border-top: none;
+}
+
+.lp-feature-media {
+  display: flex;
+  justify-content: center;
+}
+
+.lp-feature.lp-reverse .lp-feature-media {
+  order: -1;
+}
+
+.lp-list {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.lp-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--lp-tx2);
+}
+
+.lp-list li b {
+  color: var(--lp-tx);
+  font-weight: 700;
+}
+
+.lp-check {
+  flex: none;
+  margin-top: 2px;
+  color: var(--lp-tx);
+}
+
+/* ── Passos ── */
+.lp-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.lp-step {
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.lp-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--lp-card2);
+  border: 1px solid var(--lp-b);
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.lp-step h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.lp-step p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--lp-tx2);
+  margin: 0;
+}
+
+/* ── Privacidade ── */
+.lp-privacy {
+  margin-top: 36px;
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 20px;
+  padding: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px 32px;
+}
+
+.lp-privacy div h3 {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.lp-privacy div p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--lp-tx2);
+  margin: 0;
+}
+
+/* ── FAQ ── */
+.lp-faq {
+  margin-top: 32px;
+  display: grid;
+  gap: 10px;
+}
+
+.lp-faq details {
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.lp-faq summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lp-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-faq summary::after {
+  content: '+';
+  color: var(--lp-tx3);
+  font-weight: 800;
+}
+
+.lp-faq details[open] summary::after {
+  content: '−';
+}
+
+.lp-faq p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--lp-tx2);
+  margin: 12px 0 0;
+}
+
+/* ── CTA final + rodapé ── */
+.lp-final {
+  margin: 96px 0 0;
+  text-align: center;
+  background: var(--lp-card);
+  border: 1px solid var(--lp-b);
+  border-radius: 24px;
+  padding: 56px 28px;
+}
+
+.lp-final .lp-lead {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.lp-footer {
+  margin-top: 64px;
+  border-top: 1px solid var(--lp-b);
+  padding: 26px 0 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--lp-tx3);
+}
+
+.lp-footer a {
+  color: var(--lp-tx2);
+  text-decoration: none;
+  margin-left: 18px;
+}
+
+.lp-footer a:hover {
+  color: var(--lp-tx);
+}
+
+/* ── Responsivo ── */
+@media (max-width: 900px) {
+  .lp-feature,
+  .lp-privacy {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .lp-feature.lp-reverse .lp-feature-media {
+    order: 0;
+  }
+
+  .lp-trust,
+  .lp-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .lp-phones {
+    gap: 0;
+  }
+
+  .lp-phones .lp-phone-side {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .lp-hero {
+    padding-top: 48px;
+  }
+
+  .lp-section {
+    padding-top: 64px;
+  }
+
+  .lp-nav-link {
+    display: none;
+  }
+
+  .lp-final {
+    padding: 40px 20px;
+  }
+}
