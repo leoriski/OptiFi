@@ -1,6 +1,13 @@
-/* Landing pública da OptiFi. Página de marketing: vive sempre no tema claro,
-   independentemente do modo guardado pelo utilizador, por isso define as suas
-   próprias variáveis em vez de herdar as do tema da app. */
+/* Landing pública da OptiFi — site estático, separado da app.
+   Página de marketing: vive sempre no tema claro e define as suas próprias
+   variáveis, sem herdar nada do tema da app. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f7f8fa;
+}
 
 .lp {
   --lp-bg: #f7f8fa;

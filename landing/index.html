@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OptiFi — vê para onde vai o teu dinheiro</title>
+    <meta
+      name="description"
+      content="Importa o extrato do teu banco e a OptiFi mostra as fugas, as subscrições esquecidas, quanto podes gastar até ao fim do mês e um plano de poupança com números. Sem ligar a conta bancária."
+    />
+    <meta property="og:title" content="OptiFi — vê para onde vai o teu dinheiro" />
+    <meta
+      property="og:description"
+      content="Carregas o extrato do banco e a OptiFi devolve a tua vida financeira organizada. Sem ligar a conta bancária."
+    />
+    <meta property="og:image" content="img/home.png" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <!-- Os botões apontam para a app em /login e /signup: se a landing for alojada
+       noutro domínio, basta trocar por o URL completo da app. -->
+  <body>
+    <div class="lp">
+      <nav class="lp-nav">
+        <div class="lp-wrap lp-nav-in">
+          <div class="lp-brand">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="24" height="24" aria-hidden="true">
+              <clipPath id="cc1"><circle cx="16" cy="16" r="14" /></clipPath>
+              <circle cx="16" cy="16" r="15" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path d="M 8 16 A 8 8 0 0 1 24 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" clip-path="url(#cc1)" />
+              <path
+                d="M 7 17 C 10 17, 11 12, 13 14 C 15 16, 16 11, 18 13 C 20 15, 21 19, 24 18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                clip-path="url(#cc1)"
+              />
+            </svg>
+            <span>OptiFi</span>
+          </div>
+          <div class="lp-nav-links">
+            <a class="lp-nav-link" href="#funciona">Como funciona</a>
+            <a class="lp-nav-link" href="#privacidade">Privacidade</a>
+            <a class="lp-nav-link" href="/login">Entrar</a>
+            <a class="lp-btn lp-btn-primary" href="/signup">Criar conta</a>
+          </div>
+        </div>
+      </nav>
+
+      <header class="lp-hero">
+        <div class="lp-wrap">
+          <span class="lp-badge">Beta fechado · Portugal</span>
+          <h1 class="lp-h1">
+            Vê para onde vai o teu dinheiro.<br />
+            <em>E quanto podes poupar já este mês.</em>
+          </h1>
+          <p class="lp-sub">
+            Carregas o extrato do teu banco e a OptiFi devolve a tua vida financeira organizada:
+            fugas de dinheiro, subscrições esquecidas, quanto podes gastar até ao fim do mês e um
+            plano de cortes com valores concretos.
+          </p>
+          <div class="lp-cta-row">
+            <a class="lp-btn lp-btn-primary lp-btn-lg" href="/signup">Criar conta grátis</a>
+            <a class="lp-btn lp-btn-ghost lp-btn-lg" href="#funciona">Ver como funciona</a>
+          </div>
+          <p class="lp-note">Sem ligação ao banco · Sem cartão · Dados alojados na UE</p>
+
+          <div class="lp-phones">
+            <div class="lp-phone lp-phone-side">
+              <div class="lp-island"></div>
+              <div class="lp-phone-screen">
+                <img src="img/analise.png" width="786" height="1704" alt="Análise da OptiFi com sugestões de poupança" />
+              </div>
+            </div>
+            <div class="lp-phone">
+              <div class="lp-island"></div>
+              <div class="lp-phone-screen">
+                <img src="img/home.png" width="786" height="1704" alt="Início da OptiFi: quanto podes poupar por mês" />
+              </div>
+            </div>
+            <div class="lp-phone lp-phone-side">
+              <div class="lp-island"></div>
+              <div class="lp-phone-screen">
+                <img src="img/metas.png" width="786" height="1704" alt="Metas da OptiFi com dinheiro reservado" />
+              </div>
+            </div>
+          </div>
+          <p class="lp-note">Ecrãs reais da app, com o perfil de demonstração.</p>
+
+          <div class="lp-trust">
+            <div class="lp-trust-item">
+              <div class="lp-ico">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <h3>Sem ligar a conta bancária</h3>
+              <p>Não pedimos credenciais do banco. Carregas o extrato que já podes descarregar do teu homebanking.</p>
+            </div>
+            <div class="lp-trust-item">
+              <div class="lp-ico">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18M12 3c2.5 2.7 2.5 15 0 18-2.5-3-2.5-15.3 0-18Z" />
+                </svg>
+              </div>
+              <h3>Dados na União Europeia</h3>
+              <p>Base de dados alojada em Frankfurt. O ficheiro do extrato é lido e descartado — ficam só os movimentos.</p>
+            </div>
+            <div class="lp-trust-item">
+              <div class="lp-ico">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="3" width="16" height="18" rx="2" />
+                  <path d="M8 7h8M8 11h8M8 15h5" />
+                </svg>
+              </div>
+              <h3>Contas, não conselhos</h3>
+              <p>Todos os números vêm dos teus movimentos, com a conta à vista. Nada é inventado nem vendido a terceiros.</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="lp-section" id="funcionalidades">
+          <div class="lp-wrap">
+            <div class="lp-feature">
+              <div>
+                <p class="lp-kicker">Quanto podes gastar</p>
+                <h2 class="lp-h2">O saldo deixa de ser um número sem contexto</h2>
+                <p class="lp-lead">
+                  A OptiFi cruza o que entrou, o que saiu e o que já reservaste para as metas, e
+                  responde à única pergunta que importa a meio do mês: quanto é que posso gastar
+                  sem estragar nada?
+                </p>
+                <ul class="lp-list">
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Ritmo seguro por <b>semana e por dia</b>, atualizado a cada movimento que registas.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Entradas e saídas do mês em curso <b>comparadas com o mês fechado</b>.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Cartão refeição contado <b>à parte</b> do saldo da conta.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="lp-feature-media">
+                <div class="lp-phone">
+                  <div class="lp-island"></div>
+                  <div class="lp-phone-screen">
+                    <img src="img/cashflow.png" width="786" height="1704" loading="lazy" alt="Entradas e saídas do mês na OptiFi" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lp-feature lp-reverse">
+              <div>
+                <p class="lp-kicker">Subscrições</p>
+                <h2 class="lp-h2">As que continuas a pagar sem dar por isso</h2>
+                <p class="lp-lead">
+                  A app apanha as cobranças que se repetem todos os meses, mostra-te o total e
+                  pergunta uma coisa de cada vez: ainda usas? Cancelaste? O plano mais barato serve?
+                </p>
+                <ul class="lp-list">
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Deteção automática pelo <b>padrão de cobrança</b>, não por uma lista fixa de serviços.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Alternativas honestas: <b>plano mais barato, partilha ou opção gratuita</b>, com o preço de referência à vista.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Cancelaste? O valor <b>sai das contas do mês seguinte</b> automaticamente.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="lp-feature-media">
+                <div class="lp-phone">
+                  <div class="lp-island"></div>
+                  <div class="lp-phone-screen">
+                    <img src="img/subscricoes.png" width="786" height="1704" loading="lazy" alt="Subscrições detetadas pela OptiFi" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lp-feature">
+              <div>
+                <p class="lp-kicker">Plano de poupança</p>
+                <h2 class="lp-h2">Um plano com números, não com boas intenções</h2>
+                <p class="lp-lead">
+                  A partir do mês que analisaste, a OptiFi monta uma lista de cortes possíveis, cada
+                  um com o valor que liberta por mês — e mostra-te o equivalente anual, para veres o
+                  peso real da decisão.
+                </p>
+                <ul class="lp-list">
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Cortes ordenados <b>pelo que rendem</b>, com o cálculo explicado em cada linha.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Regra <b>50/30/20</b> aplicada aos teus números, não a uma média nacional.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Marcas o que já fizeste e o plano <b>reajusta-se</b>.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="lp-feature-media">
+                <div class="lp-phone">
+                  <div class="lp-island"></div>
+                  <div class="lp-phone-screen">
+                    <img src="img/plano.png" width="786" height="1704" loading="lazy" alt="Plano de poupança da OptiFi" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lp-feature lp-reverse">
+              <div>
+                <p class="lp-kicker">Metas</p>
+                <h2 class="lp-h2">Poupar deixa de ser o que sobra ao fim do mês</h2>
+                <p class="lp-lead">
+                  Defines quanto reservas por mês para cada meta e esse dinheiro sai do &quot;livre
+                  para gastar&quot;. A app diz-te, ao ritmo atual, em que mês é que lá chegas.
+                </p>
+                <ul class="lp-list">
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Projeção honesta: <b>a data a que chegas</b>, mesmo quando é depois do alvo.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Lembrete da <b>transferência real</b> — a app não mexe no teu dinheiro.</span>
+                  </li>
+                  <li>
+                    <svg class="lp-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg>
+                    <span>Levantar de uma meta é <b>um passo assumido</b>, com registo.</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="lp-feature-media">
+                <div class="lp-phone">
+                  <div class="lp-island"></div>
+                  <div class="lp-phone-screen">
+                    <img src="img/metas.png" width="786" height="1704" loading="lazy" alt="Metas da OptiFi com dinheiro reservado" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lp-section" id="funciona">
+          <div class="lp-wrap">
+            <p class="lp-kicker">Como funciona</p>
+            <h2 class="lp-h2">Três passos, cerca de um minuto por mês</h2>
+            <p class="lp-lead">
+              Não há sincronizações a correr em segundo plano nem robôs a adivinhar o teu futuro.
+              És tu que dás o extrato; a app faz as contas.
+            </p>
+            <div class="lp-steps">
+              <div class="lp-step">
+                <div class="lp-step-n">1</div>
+                <h3>Descarrega o extrato</h3>
+                <p>CSV, XLSX ou PDF do teu banco — Revolut, CGD, Millennium, Santander e por aí fora. Um ficheiro, um mês.</p>
+              </div>
+              <div class="lp-step">
+                <div class="lp-step-n">2</div>
+                <h3>A OptiFi lê e organiza</h3>
+                <p>Reconhece o formato sozinha, categoriza os movimentos, separa as transferências e apanha as subscrições.</p>
+              </div>
+              <div class="lp-step">
+                <div class="lp-step-n">3</div>
+                <h3>Segue o plano</h3>
+                <p>Vês quanto podes cortar, quanto podes gastar por semana e o que isso faz às tuas metas. Repetes no mês seguinte.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lp-section" id="privacidade">
+          <div class="lp-wrap">
+            <p class="lp-kicker">Privacidade</p>
+            <h2 class="lp-h2">O teu extrato é teu</h2>
+            <p class="lp-lead">
+              Uma app de finanças pessoais vive da confiança. Estas são as regras — as mesmas que
+              estão na política de privacidade, sem letra pequena.
+            </p>
+            <div class="lp-privacy">
+              <div>
+                <h3>Nunca pedimos credenciais do banco</h3>
+                <p>Não há Open Banking nem acesso à tua conta. Só o ficheiro que tu carregas.</p>
+              </div>
+              <div>
+                <h3>O ficheiro é descartado</h3>
+                <p>Depois de lido, guardamos apenas os movimentos estruturados — data, descritivo, valor e categoria.</p>
+              </div>
+              <div>
+                <h3>Servidores na UE</h3>
+                <p>Base de dados na região de Frankfurt, com subcontratantes ao abrigo do RGPD.</p>
+              </div>
+              <div>
+                <h3>Sem publicidade e sem venda de dados</h3>
+                <p>Não criamos perfis para terceiros. Exportas tudo ou apagas a conta quando quiseres.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lp-section" id="perguntas">
+          <div class="lp-wrap">
+            <p class="lp-kicker">Perguntas frequentes</p>
+            <h2 class="lp-h2">O que costumam perguntar antes de entrar</h2>
+            <div class="lp-faq">
+              <details>
+                <summary>Preciso de dar acesso ao meu banco?</summary>
+                <p>Não. A OptiFi nunca se liga à tua conta bancária nem pede credenciais. Descarregas o extrato do homebanking e carrega-lo na app — é o mesmo ficheiro que já podes abrir no Excel.</p>
+              </details>
+              <details>
+                <summary>Que bancos é que funcionam?</summary>
+                <p>O leitor identifica o formato pelo conteúdo do ficheiro, não pelo nome do banco. Está testado com Revolut, Caixa Geral de Depósitos, Millennium BCP, Santander e corretoras como a Trade Republic ou a Trading 212, e aceita CSV, XLSX e PDF.</p>
+              </details>
+              <details>
+                <summary>De onde vêm os valores que a app mostra?</summary>
+                <p>De cálculo determinístico sobre os teus movimentos: soma de entradas e saídas, deteção de cobranças repetidas, comparação com o preço público dos planos das subscrições. Cada cartão explica a conta que fez — e nenhuma sugestão é conselho de investimento.</p>
+              </details>
+              <details>
+                <summary>E se quiser sair?</summary>
+                <p>Exportas tudo em JSON e apagas a conta a partir do Perfil. O apagamento é imediato e irreversível, sem pedidos por email nem períodos de espera.</p>
+              </details>
+              <details>
+                <summary>Quanto custa?</summary>
+                <p>A OptiFi está em beta fechado e é gratuita para quem entra nesta fase. Sem cartão, sem publicidade e sem venda de dados.</p>
+              </details>
+            </div>
+
+            <div class="lp-final">
+              <h2 class="lp-h2">Começa pelo mês passado</h2>
+              <p class="lp-lead">
+                Um extrato chega para veres o que se passou e quanto podias ter poupado. Se não
+                gostares do que vês, apagas a conta em dois toques.
+              </p>
+              <div class="lp-cta-row">
+                <a class="lp-btn lp-btn-primary lp-btn-lg" href="/signup">Criar conta grátis</a>
+                <a class="lp-btn lp-btn-ghost lp-btn-lg" href="/login">Já tenho conta</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="lp-wrap lp-footer">
+        <span>© 2026 OptiFi · Beta fechado</span>
+        <span>
+          <a href="/privacidade">Privacidade</a>
+          <a href="/termos">Termos</a>
+          <a href="mailto:synamade12@gmail.com">Contacto</a>
+        </span>
+      </footer>
+    </div>
+  </body>
+</html>
