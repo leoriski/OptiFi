@@ -1,15 +1,16 @@
-/* Landing pública da OptiFi. Página de marketing: vive sempre no tema escuro,
+/* Landing pública da OptiFi. Página de marketing: vive sempre no tema claro,
    independentemente do modo guardado pelo utilizador, por isso define as suas
    próprias variáveis em vez de herdar as do tema da app. */
 
 .lp {
-  --lp-bg: #0b0e14;
-  --lp-card: #161b26;
-  --lp-card2: #1d2330;
-  --lp-b: #262d3d;
-  --lp-tx: #f4f7fb;
-  --lp-tx2: #9aa7bd;
-  --lp-tx3: #5c6781;
+  --lp-bg: #f7f8fa;
+  --lp-card: #ffffff;
+  --lp-card2: #f2f4f7;
+  --lp-b: #e4e8ef;
+  --lp-tx: #0f1623;
+  --lp-tx2: #566175;
+  --lp-tx3: #8a93a6;
+  --lp-shadow: 0 1px 2px rgba(15, 22, 35, 0.04), 0 8px 24px -16px rgba(15, 22, 35, 0.18);
   background: var(--lp-bg);
   color: var(--lp-tx);
   font-family: Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -109,6 +110,7 @@
   background: var(--lp-card);
   color: var(--lp-tx);
   border-color: var(--lp-b);
+  box-shadow: var(--lp-shadow);
 }
 
 .lp-btn-ghost:hover {
@@ -137,7 +139,7 @@
   width: min(900px, 120%);
   height: 620px;
   right: 50%;
-  background: radial-gradient(ellipse at center, rgba(154, 167, 189, 0.13), transparent 65%);
+  background: radial-gradient(ellipse at center, rgba(99, 130, 190, 0.16), transparent 65%);
   pointer-events: none;
 }
 
@@ -205,9 +207,9 @@
   padding: 9px;
   background: linear-gradient(160deg, #414755 0%, #1b1f28 42%, #0d1016 100%);
   box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.14) inset,
-    0 30px 70px -22px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(0, 0, 0, 0.6);
+    0 2px 0 rgba(255, 255, 255, 0.18) inset,
+    0 26px 60px -24px rgba(15, 22, 35, 0.45),
+    0 0 0 1px rgba(15, 22, 35, 0.18);
   flex: none;
 }
 
@@ -276,6 +278,7 @@
   border: 1px solid var(--lp-b);
   border-radius: 16px;
   padding: 18px 18px 20px;
+  box-shadow: var(--lp-shadow);
 }
 
 .lp-trust-item h3 {
@@ -386,6 +389,7 @@
   border: 1px solid var(--lp-b);
   border-radius: 18px;
   padding: 22px;
+  box-shadow: var(--lp-shadow);
 }
 
 .lp-step-n {
@@ -422,6 +426,7 @@
   border: 1px solid var(--lp-b);
   border-radius: 20px;
   padding: 30px;
+  box-shadow: var(--lp-shadow);
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 22px 32px;
@@ -452,6 +457,7 @@
   border: 1px solid var(--lp-b);
   border-radius: 14px;
   padding: 16px 18px;
+  box-shadow: var(--lp-shadow);
 }
 
 .lp-faq summary {
@@ -493,6 +499,7 @@
   border: 1px solid var(--lp-b);
   border-radius: 24px;
   padding: 56px 28px;
+  box-shadow: var(--lp-shadow);
 }
 
 .lp-final .lp-lead {
