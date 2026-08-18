@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import { AuthCard, ErrorMsg, FieldLabel } from '@/components/AuthCard';
 import { SocialAuth } from '@/components/SocialAuth';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function LoginPage() {
   const { t } = useI18n();
@@ -46,7 +47,7 @@ export default function LoginPage() {
         <FieldLabel>{t('auth_email')}</FieldLabel>
         <input className="auth-input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <FieldLabel>{t('auth_password')}</FieldLabel>
-        <input className="auth-input" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput required autoComplete="current-password" value={password} onChange={setPassword} />
         <ErrorMsg>{error}</ErrorMsg>
         <button className="btn-primary" style={{ marginTop: 18 }} disabled={busy} type="submit">
           {t('auth_login_btn')}

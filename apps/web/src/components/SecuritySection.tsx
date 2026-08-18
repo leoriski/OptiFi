@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n';
+import { PasswordInput } from '@/components/PasswordInput';
 
 interface Enrolling {
   factorId: string;
@@ -118,8 +119,8 @@ export function SecuritySection() {
       {/* Alterar palavra-passe */}
       <div className="card">
         <div style={secHdr}>{t('pwd_change')}</div>
-        <input className="auth-input" type="password" autoComplete="new-password" placeholder={t('auth_password')} value={pwd} onChange={(e) => setPwd(e.target.value)} style={{ marginBottom: 8 }} />
-        <input className="auth-input" type="password" autoComplete="new-password" placeholder={t('auth_password_confirm')} value={pwd2} onChange={(e) => setPwd2(e.target.value)} style={{ marginBottom: 10 }} />
+        <PasswordInput autoComplete="new-password" placeholder={t('auth_password')} value={pwd} onChange={setPwd} style={{ marginBottom: 8 }} />
+        <PasswordInput autoComplete="new-password" placeholder={t('auth_password_confirm')} value={pwd2} onChange={setPwd2} style={{ marginBottom: 10 }} />
         {pwdMsg && (
           <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, color: pwdMsg.ok ? 'var(--gr)' : 'var(--re)' }}>{pwdMsg.text}</div>
         )}

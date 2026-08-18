@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import { AuthCard, ErrorMsg, FieldLabel, OkMsg } from '@/components/AuthCard';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function UpdatePasswordPage() {
   const { t } = useI18n();
@@ -45,9 +46,9 @@ export default function UpdatePasswordPage() {
     <AuthCard title={t('auth_update_pwd_title')}>
       <form onSubmit={onSubmit}>
         <FieldLabel>{t('auth_password')}</FieldLabel>
-        <input className="auth-input" type="password" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput required autoComplete="new-password" value={password} onChange={setPassword} />
         <FieldLabel>{t('auth_password_confirm')}</FieldLabel>
-        <input className="auth-input" type="password" required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <PasswordInput required autoComplete="new-password" value={confirm} onChange={setConfirm} />
         <ErrorMsg>{error}</ErrorMsg>
         <OkMsg>{done ? t('auth_updated_pwd') : ''}</OkMsg>
         <button className="btn-primary" style={{ marginTop: 18 }} disabled={busy || done} type="submit">

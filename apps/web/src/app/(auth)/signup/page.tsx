@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import { AuthCard, ErrorMsg, FieldLabel } from '@/components/AuthCard';
 import { SocialAuth } from '@/components/SocialAuth';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function SignupPage() {
   const { t } = useI18n();
@@ -66,9 +67,9 @@ export default function SignupPage() {
         <FieldLabel>{t('auth_email')}</FieldLabel>
         <input className="auth-input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <FieldLabel>{t('auth_password')}</FieldLabel>
-        <input className="auth-input" type="password" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput required autoComplete="new-password" value={password} onChange={setPassword} />
         <FieldLabel>{t('auth_password_confirm')}</FieldLabel>
-        <input className="auth-input" type="password" required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <PasswordInput required autoComplete="new-password" value={confirm} onChange={setConfirm} />
         <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 14, fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5, cursor: 'pointer' }}>
           <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2 }} />
           <span>
