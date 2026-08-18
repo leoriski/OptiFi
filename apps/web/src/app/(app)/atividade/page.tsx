@@ -41,7 +41,7 @@ const linkBtn: React.CSSProperties = {
   fontWeight: 700,
   cursor: 'pointer',
   textDecoration: 'underline',
-  fontFamily: 'Inter,sans-serif',
+  fontFamily: 'Manrope, sans-serif',
 };
 
 const FILTER_ORDER: CategoryKey[] =['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
@@ -390,7 +390,7 @@ export default function ActivityPage() {
     fontSize: 13,
     fontWeight: 800,
     cursor: 'pointer',
-    fontFamily: 'Inter,sans-serif',
+    fontFamily: 'Manrope, sans-serif',
     background: active ? 'var(--pr)' : 'transparent',
     color: active ? 'var(--bg)' : 'var(--tx2)',
     border: 'none',
@@ -408,7 +408,7 @@ export default function ActivityPage() {
         fontSize: 11,
         fontWeight: 800,
         cursor: 'pointer',
-        fontFamily: 'Inter,sans-serif',
+        fontFamily: 'Manrope, sans-serif',
       }}
     >
       {label}
@@ -473,7 +473,7 @@ export default function ActivityPage() {
                       fontSize: 12,
                       fontWeight: 800,
                       cursor: 'pointer',
-                      fontFamily: 'Inter,sans-serif',
+                      fontFamily: 'Manrope, sans-serif',
                       background: mType === ty ? 'var(--pr)' : 'var(--card2)',
                       color: mType === ty ? 'var(--bg)' : 'var(--tx2)',
                       border: mType === ty ? '1px solid transparent' : '1px solid var(--b)',
@@ -510,7 +510,7 @@ export default function ActivityPage() {
                     border: mMealCard ? '1px solid var(--tx)' : '1px solid var(--b)',
                     background: 'var(--card2)',
                     cursor: 'pointer',
-                    fontFamily: 'Inter,sans-serif',
+                    fontFamily: 'Manrope, sans-serif',
                     textAlign: 'left',
                   }}
                 >
@@ -532,7 +532,15 @@ export default function ActivityPage() {
                   >
                     {mMealCard ? '✓' : ''}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{t('manual_meal_toggle')}</span>
+                  <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{t('manual_meal_toggle')}</span>
+                  {/* Quanto ainda resta no cartão, aqui mesmo: é neste momento
+                      que a pergunta se faz, e ver o número mexer é o que faz
+                      valer a pena registar da próxima vez. */}
+                  {fin.fs?.mealCard && (
+                    <span style={{ fontSize: 12, fontWeight: 800, flexShrink: 0, color: fin.fs.mealCard.left < 0 ? 'var(--re)' : 'var(--tx2)' }}>
+                      {t('meal_home_left')} {fmtEur(fin.fs.mealCard.left)}
+                    </span>
+                  )}
                 </button>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
@@ -558,7 +566,7 @@ export default function ActivityPage() {
                 fontSize: 13,
                 fontWeight: 800,
                 cursor: 'pointer',
-                fontFamily: 'Inter,sans-serif',
+                fontFamily: 'Manrope, sans-serif',
               }}
             >
               {t('act_add_manual')}
@@ -742,7 +750,7 @@ export default function ActivityPage() {
                 fontSize: 13,
                 fontWeight: 800,
                 cursor: 'pointer',
-                fontFamily: 'Inter,sans-serif',
+                fontFamily: 'Manrope, sans-serif',
               }}
             >
               {t('subs_add')}

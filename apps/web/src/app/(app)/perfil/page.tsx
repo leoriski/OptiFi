@@ -125,7 +125,7 @@ function SettingsItem({ kind, title, sub, onClick, trailing }: { kind: Exclude<D
         borderBottom: '1px solid var(--b)',
         cursor: 'pointer',
         textAlign: 'left',
-        fontFamily: 'Inter,sans-serif',
+        fontFamily: 'Manrope, sans-serif',
       }}
     >
       <ItemIcon kind={kind} />
@@ -246,7 +246,7 @@ export default function ProfilePage() {
     fontSize: 13,
     fontWeight: 800,
     cursor: 'pointer',
-    fontFamily: 'Inter,sans-serif',
+    fontFamily: 'Manrope, sans-serif',
     background: active ? 'var(--pr)' : 'var(--card2)',
     color: active ? 'var(--bg)' : 'var(--tx2)',
     border: active ? '1px solid transparent' : '1px solid var(--b)',
@@ -338,7 +338,7 @@ export default function ProfilePage() {
           fontSize: 14,
           fontWeight: 800,
           cursor: 'pointer',
-          fontFamily: 'Inter,sans-serif',
+          fontFamily: 'Manrope, sans-serif',
         }}
       >
         [→ {t('profile_logout')}
@@ -354,7 +354,7 @@ export default function ProfilePage() {
           fontSize: 12,
           fontWeight: 700,
           cursor: 'pointer',
-          fontFamily: 'Inter,sans-serif',
+          fontFamily: 'Manrope, sans-serif',
         }}
       >
         {t('profile_delete_link')}

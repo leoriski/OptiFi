@@ -233,9 +233,110 @@ export default function HomePage() {
     </div>
   );
 
+  // ── Cartão refeição — uma tira no topo, não um cartão no meio ──
+  // É a única pergunta DIÁRIA da app ("posso pagar isto com o cartão?"),
+  // enquanto o resto se pergunta uma vez por mês. Por isso fica acima da
+  // dobra. O número é o que RESTA; recebes/gastaste passam a contexto.
+  const openMealEdit = () => {
+    setMealInput(fin.mealCard > 0 ? String(fin.mealCard) : '');
+    setEditingMeal(true);
+  };
+  const mealStrip = editingMeal ? (
+    <div className="card" style={{ marginBottom: 13 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 6 }}>{t('meal_card_lbl')}</label>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          className="auth-input"
+          type="number"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={mealInput}
+          autoFocus
+          onChange={(e) => setMealInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void saveMeal();
+          }}
+        />
+        <button className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: 13 }} onClick={() => void saveMeal()}>
+          {t('meal_card_save')}
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button className="btn-secondary" style={{ padding: 10, fontSize: 12 }} onClick={() => setEditingMeal(false)}>
+          {t('goal_cancel')}
+        </button>
+        {fin.mealCard > 0 && (
+          <button className="btn-secondary" style={{ padding: 10, fontSize: 12, color: 'var(--re)' }} onClick={() => void clearMeal()}>
+            {t('meal_card_clear')}
+          </button>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--tx3)', marginTop: 10, lineHeight: 1.5 }}>{t('meal_card_note')}</div>
+    </div>
+  ) : fs.mealCard ? (
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 13 }}>
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--tx2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <path d="M6 3v7a2.5 2.5 0 0 0 5 0V3M8.5 10v11" />
+        <path d="M18 3c-1.7 1.2-2.5 3-2.5 5.5S16.3 12 18 12.5V21" />
+      </svg>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 10, color: 'var(--tx3)', fontWeight: 800, letterSpacing: '.5px' }}>{t('meal_home_lbl')}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, margin: '1px 0 6px' }}>
+          <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.5px', color: fs.mealCard.left < 0 ? 'var(--re)' : 'var(--tx)' }}>
+            {fmtEur(fs.mealCard.left)}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--tx3)' }}>{fill(t('meal_strip_of'), { total: fmtEur(fs.mealCard.monthly) })}</span>
+        </div>
+        {fs.mealCard.monthly > 0 && (
+          <div style={{ height: 4, background: 'var(--card2)', borderRadius: 2, overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (fs.mealCard.spent / fs.mealCard.monthly) * 100)}%`,
+                background: fs.mealCard.spent > fs.mealCard.monthly ? 'var(--re)' : 'var(--tx)',
+                borderRadius: 2,
+                transition: 'width .4s',
+              }}
+            />
+          </div>
+        )}
+      </div>
+      <button
+        onClick={openMealEdit}
+        style={{ background: 'none', border: 'none', color: 'var(--tx3)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Manrope, sans-serif', padding: 0, flexShrink: 0, alignSelf: 'flex-start' }}
+      >
+        {t('meal_home_edit')}
+      </button>
+    </div>
+  ) : (
+    // Sem cartão configurado isto não é informação, é uma pergunta — uma
+    // linha discreta, não um cartão a ocupar o topo da página.
+    <button
+      onClick={openMealEdit}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        width: '100%',
+        marginBottom: 13,
+        padding: '9px 2px',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: 'Manrope, sans-serif',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{ fontSize: 12, color: 'var(--tx3)' }}>{t('meal_strip_ask')}</span>
+      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--tx2)' }}>{t('meal_home_set')} ›</span>
+    </button>
+  );
+
   return (
     <>
       {greeting}
+      {mealStrip}
       {tipCard}
 
       {/* Défice do mês fechado — a Home não pode prometer poupança sem dizer
@@ -376,94 +477,6 @@ export default function HomePage() {
         <CashflowChart points={chartPoints} labels={chartLabels} />
       </div>
 
-      {/* CARTÃO REFEIÇÃO — pote próprio: recebes X, gastaste Y, restam Z.
-          O valor mensal edita-se aqui, ao lado dos números que explica. */}
-      <div className="card" style={{ marginBottom: 13 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10, gap: 8 }}>
-          <div style={{ fontSize: 11, color: 'var(--tx3)', fontWeight: 800, letterSpacing: '.6px' }}>{t('meal_home_lbl')}</div>
-          {editingMeal ? (
-            <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{currMonth}</div>
-          ) : (
-            <button
-              onClick={() => {
-                setMealInput(fin.mealCard > 0 ? String(fin.mealCard) : '');
-                setEditingMeal(true);
-              }}
-              style={{ background: 'none', border: 'none', color: 'var(--pr)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter,sans-serif', padding: 0 }}
-            >
-              {fs.mealCard ? t('meal_home_edit') : t('meal_home_set')}
-            </button>
-          )}
-        </div>
-
-        {editingMeal ? (
-          <>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 6 }}>{t('meal_card_lbl')}</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                className="auth-input"
-                type="number"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={mealInput}
-                autoFocus
-                onChange={(e) => setMealInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void saveMeal();
-                }}
-              />
-              <button className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: 13 }} onClick={() => void saveMeal()}>
-                {t('meal_card_save')}
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button className="btn-secondary" style={{ padding: 10, fontSize: 12 }} onClick={() => setEditingMeal(false)}>
-                {t('goal_cancel')}
-              </button>
-              {fin.mealCard > 0 && (
-                <button className="btn-secondary" style={{ padding: 10, fontSize: 12, color: 'var(--re)' }} onClick={() => void clearMeal()}>
-                  {t('meal_card_clear')}
-                </button>
-              )}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--tx3)', marginTop: 10, lineHeight: 1.5 }}>{t('meal_card_note')}</div>
-          </>
-        ) : !fs.mealCard ? (
-          <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5 }}>{t('meal_home_empty')}</div>
-        ) : (
-          <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <div>
-              <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{t('meal_home_in')}</div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--gr)' }}>+{fmtEur(fs.mealCard.monthly)}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{t('meal_home_spent')}</div>
-              <div style={{ fontSize: 15, fontWeight: 900 }}>−{fmtEur(fs.mealCard.spent)}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: 'var(--tx3)' }}>{t('meal_home_left')}</div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: fs.mealCard.left < 0 ? 'var(--re)' : 'var(--tx)' }}>{fmtEur(fs.mealCard.left)}</div>
-            </div>
-          </div>
-          {fs.mealCard.monthly > 0 && (
-            <div style={{ height: 6, background: 'var(--card2)', borderRadius: 3, overflow: 'hidden' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${Math.min(100, (fs.mealCard.spent / fs.mealCard.monthly) * 100)}%`,
-                  background: fs.mealCard.spent > fs.mealCard.monthly ? 'var(--re)' : 'var(--tx)',
-                  borderRadius: 3,
-                  transition: 'width .4s',
-                }}
-              />
-            </div>
-          )}
-          <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 8 }}>{t('meal_home_note')}</div>
-          </>
-        )}
-      </div>
-
       {/* QUANTO PODES GASTAR — um só modelo, ligado ao saldo real */}
       <div className="card" style={{ borderColor: 'color-mix(in srgb,var(--pr) 25%,transparent)' }}>
         <div style={{ fontSize: 11, color: 'var(--pr)', fontWeight: 800, letterSpacing: '.6px', marginBottom: 10 }}>
@@ -508,7 +521,7 @@ export default function HomePage() {
                   setBalanceInput(fs.currentBalance !== null ? String(fs.currentBalance) : '');
                   setEditingBalance(true);
                 }}
-                style={{ background: 'none', border: 'none', color: 'var(--pr)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
+                style={{ background: 'none', border: 'none', color: 'var(--pr)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}
               >
                 {t('bal_edit')}
               </button>
@@ -559,7 +572,7 @@ export default function HomePage() {
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: 'pointer',
-                  fontFamily: 'Inter,sans-serif',
+                  fontFamily: 'Manrope, sans-serif',
                 }}
               >
                 {t('spend_cut_cta')}

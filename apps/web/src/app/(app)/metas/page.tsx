@@ -222,7 +222,7 @@ export default function GoalsPage() {
                     border: `1px solid ${done ? 'color-mix(in srgb, var(--gr) 35%, transparent)' : 'var(--b)'}`,
                     background: done ? 'color-mix(in srgb, var(--gr) 8%, transparent)' : 'var(--card2)',
                     cursor: 'pointer',
-                    fontFamily: 'Inter,sans-serif',
+                    fontFamily: 'Manrope, sans-serif',
                     textAlign: 'left',
                   }}
                 >
