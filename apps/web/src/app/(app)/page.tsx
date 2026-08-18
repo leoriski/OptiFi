@@ -17,7 +17,7 @@ import { CashflowChart, type CashflowPoint } from '@/components/CashflowChart';
 import { PlanDrawer } from '@/components/PlanDrawer';
 
 const TIPS_PT = [
-  'Regra dos 24h: antes de qualquer compra acima de €50.00 espera 24h. Elimina 80% das compras por impulso.',
+  'Regra dos 24h: antes de qualquer compra acima de €50 espera 24h. Elimina 80% das compras por impulso.',
   'Rever as subscrições uma vez por mês evita pagar por serviços esquecidos.',
   'Reservar dinheiro para metas no início do mês torna a poupança automática — o que sobra é que se gasta.',
   'Compras pequenas repetidas pesam mais do que uma compra grande. Soma os cafés do mês e vê.',
@@ -25,7 +25,7 @@ const TIPS_PT = [
   'Paga-te primeiro: transfere para as metas no dia em que recebes, não no fim do mês.',
 ];
 const TIPS_EN = [
-  '24h rule: before any purchase over €50.00, wait 24h. It kills 80% of impulse buys.',
+  '24h rule: before any purchase over €50, wait 24h. It kills 80% of impulse buys.',
   'Reviewing subscriptions once a month avoids paying for forgotten services.',
   'Reserving money for goals early in the month makes saving automatic — you spend what is left.',
   'Small repeated purchases weigh more than one big buy. Add up the month’s coffees.',
@@ -175,8 +175,13 @@ export default function HomePage() {
   // O ritmo semanal nunca é negativo (não podes gastar menos que nada); o
   // detalhe abaixo mostra o gastável real, com sinal, quando negativo.
   const nowW = (Math.max(0, spendable) / days) * 7;
-  const planW = (Math.max(0, spendable + optSavings) / days) * 7;
-  const margin = planW - nowW;
+  // Cortar não te deixa gastar MAIS — deixa-te ficar com mais no fim do mês.
+  // A versão anterior somava a poupança ao gastável e anunciava um ritmo
+  // semanal maior, ou seja: um cartão chamado "quanto podes gastar" que subia
+  // quando poupavas. O que o plano vale nos dias que faltam é a poupança
+  // mensal proporcional a esses dias.
+  const monthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const planKeep = optSavings * (days / monthDays);
 
   const saveBalance = async () => {
     const v = parseFloat(balanceInput.replace(',', '.'));
@@ -227,7 +232,7 @@ export default function HomePage() {
           {t(kind === 'now' ? 'spend_now_title' : 'spend_plan_title')}
         </div>
         <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.4 }}>
-          {fill(t(kind === 'now' ? 'spend_now_line' : 'spend_plan_line'), { amount: fmtEur(kind === 'now' ? nowW : planW) })}
+          {fill(t(kind === 'now' ? 'spend_now_line' : 'spend_plan_line'), { amount: fmtEur(kind === 'now' ? nowW : planKeep) })}
         </div>
       </div>
     </div>
@@ -425,7 +430,20 @@ export default function HomePage() {
             não há âncora, mostra o movimento do mês corrente registado. */}
         {balanceSet && fs.currentBalance !== null ? (
           <>
-            <div className="ballbl" style={{ marginBottom: 2 }}>{t('bal_current')}</div>
+            {/* O saldo vive AQUI e só aqui. Antes era repetido, com o mesmo
+                rótulo e o mesmo valor, no cartão logo a seguir. */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
+              <span className="ballbl">{t('bal_current')}</span>
+              <button
+                onClick={() => {
+                  setBalanceInput(fs.currentBalance !== null ? String(fs.currentBalance) : '');
+                  setEditingBalance(true);
+                }}
+                style={{ background: 'none', border: 'none', color: 'var(--tx3)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Manrope, sans-serif', padding: 0 }}
+              >
+                {t('bal_edit')}
+              </button>
+            </div>
             <div className="balamt">{fmtEur(fs.currentBalance)}</div>
             <div className="balrow" style={{ marginBottom: 8 }}>
               <div className="bi">
@@ -513,24 +531,8 @@ export default function HomePage() {
           </>
         ) : (
           <>
-            {/* Saldo atual — a fonte de verdade, com origem explícita */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
-              <span style={{ fontSize: 12, color: 'var(--tx2)', fontWeight: 700 }}>{t('bal_current')}</span>
-              <button
-                onClick={() => {
-                  setBalanceInput(fs.currentBalance !== null ? String(fs.currentBalance) : '');
-                  setEditingBalance(true);
-                }}
-                style={{ background: 'none', border: 'none', color: 'var(--pr)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}
-              >
-                {t('bal_edit')}
-              </button>
-            </div>
-            <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--tx)' }}>
-              {fmtEur(fs.currentBalance ?? 0)}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--tx3)', marginBottom: 14 }}>{t('bal_after_moves')}</div>
-
+            {/* Sem repetir o saldo: este cartão responde só a "a que ritmo
+                posso gastar", que é uma pergunta diferente. */}
             <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5, marginBottom: 12 }}>
               {fill(t('spend_frame_real'), { balance: fmtEur(fs.currentBalance ?? 0), reserved: fmtEur(fs.allocatedTotal), spendable: fmtEur(spendable), days })}
             </div>
@@ -542,22 +544,6 @@ export default function HomePage() {
             <div style={{ fontSize: 13, color: 'var(--tx2)', marginTop: 1 }}>{fill(t('pace_day'), { amount: fmtEur(nowW / 7) })}</div>
             {scenarioBox('now')}
             {optSavings > 0.5 && scenarioBox('plan')}
-            {margin > 0.5 && (
-              <div
-                style={{
-                  marginTop: 9,
-                  padding: '9px 12px',
-                  borderRadius: 'var(--rs)',
-                  background: 'color-mix(in srgb,var(--pr) 10%,transparent)',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: 'var(--pr)',
-                  lineHeight: 1.4,
-                }}
-              >
-                {fill(t('spend_margin'), { amount: fmtEur(margin) })}
-              </div>
-            )}
             {optSavings > 0.5 && (
               <button
                 onClick={() => setPlanOpen(true)}

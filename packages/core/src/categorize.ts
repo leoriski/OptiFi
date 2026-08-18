@@ -28,6 +28,11 @@ export const MERCHANT_RULES: MerchantRule[] = [
   // são instrumentos pessoa-a-pessoa (um ordenado chega sempre por
   // 'TRF CRED SEPA', nunca por aqui), por isso contam nos dois sentidos.
   { key: 'transferencias', patterns: ['trf.imed. p/', 'trf.imed. de', 'trf imediata p', 'trf. p/o', 'trf p/', 'transferencia p/', 'transferencia para', 'trf mb way', 'trf mbway', 'mb way p/', 'mb way de', 'mb way recebido'] },
+  // Carregar a carteira/cartão de outro banco ("CAR WAL CRT DEB REVOL" =
+  // carregamento wallet cartão débito Revolut) é dinheiro a mudar de bolso do
+  // MESMO dono — não é consumo. O gasto verdadeiro está no extrato desse outro
+  // banco; contá-lo aqui como despesa seria contá-lo duas vezes.
+  { key: 'transferencias', patterns: ['car wal', 'carregamento wallet', 'carreg wallet'] },
 
   // Alimentação = comida ESSENCIAL (supermercado/mercearia). Comer fora é lazer.
   { key: 'alimentacao', patterns: ['pingo doce', 'continente', 'lidl', 'aldi', 'intermarche', 'minipreco', 'auchan', 'jumbo', 'mercadona', 'el corte ingles', 'supermercado', 'mercado', 'frutaria', 'talho', 'mercearia', 'padaria'] },
@@ -69,16 +74,46 @@ export const MERCHANT_RULES: MerchantRule[] = [
   { key: 'lazer', patterns: ['cinema', 'uci', 'nos cinemas', 'cinemas'] },
   { key: 'lazer', patterns: ['fnac', 'worten', 'mediamarkt', 'radio popular'] },
   { key: 'lazer', patterns: ['sport zone', 'decathlon', 'sports direct', 'sportsdirect'] },
-  { key: 'lazer', patterns: ['zara', 'h&m', 'primark', 'springfield', 'lefties', 'pull&bear', 'pull and bear', 'bershka', 'stradivarius', 'snipes', 'jd sports', 'sport direct', 'nike', 'adidas'] },
+  { key: 'lazer', patterns: ['zara', 'h&m', 'primark', 'springfield', 'lefties', 'pull&bear', 'pull and bear', 'bershka', 'stradivarius', 'snipes', 'jd sports', 'sport direct', 'nike', 'adidas', 'tiffosi', 'salsa jeans', 'parfois'] },
   { key: 'lazer', patterns: ['ticketline', 'blueticket', 'see tickets'] },
 ];
 
-/** Substring match (sem acentos) contra a lista ordenada; desconhecidos → outros. */
+/**
+ * Comprimento mínimo de um padrão cortado a meio para ainda contar. Seis
+ * caracteres chegam para "pingo d" e "contin" sem que "restau"/"transf"
+ * apanhem palavras que só por acaso começam igual.
+ */
+const MIN_TRUNCATED = 6;
+
+/**
+ * O descritivo contém o padrão — ou TERMINA a meio dele.
+ *
+ * Os extratos cortam o nome do comerciante a um número fixo de caracteres
+ * ("COMPRAS C PINGO D", "COMPRAS C CONTIN"), e o corte é sempre no fim. Sem
+ * isto, os comerciantes mais frequentes de um extrato português — que são
+ * exatamente os supermercados — caíam todos em 'outros', e a categoria que
+ * significa "não sei o que isto é" passava a ser a maior do mês.
+ *
+ * O corte tem de cair A MEIO de uma palavra. Sem essa condição, "RENDA CASA
+ * TRANSFERENCIA" acabava em 'receita' por bater no início de "transferencia
+ * recebida": aí a palavra está inteira, e uma palavra inteira já é decidida
+ * pelo includes normal.
+ */
+function matchesPattern(desc: string, pat: string): boolean {
+  if (desc.includes(pat)) return true;
+  for (let k = pat.length - 1; k >= MIN_TRUNCATED; k--) {
+    if (pat[k] === ' ' || pat[k - 1] === ' ') continue;
+    if (desc.endsWith(pat.slice(0, k))) return true;
+  }
+  return false;
+}
+
+/** Match (sem acentos, tolerante a truncagem) contra a lista ordenada; desconhecidos → outros. */
 export function categorizeMerchant(name: string): CategoryKey {
   const lower = norm(name);
   for (const rule of MERCHANT_RULES) {
     for (const pat of rule.patterns) {
-      if (lower.includes(pat)) return rule.key;
+      if (matchesPattern(lower, pat)) return rule.key;
     }
   }
   return 'outros';

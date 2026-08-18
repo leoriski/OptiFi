@@ -1,8 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { ingestStatement, assignFingerprints, categorizeStatement, IngestError } from '../src/index.js';
+import { ingestStatement, assignFingerprints, categorizeStatement, buildStatement, IngestError } from '../src/index.js';
 import { REVOLUT_CSV, CGD_CSV, UNKNOWN_CSV } from './fixtures/statements.js';
 
 const enc = new TextEncoder();
+
+describe('subscrições do mesmo serviço cobradas mais do que uma vez', () => {
+  it('junta pelo nome base e soma o que custou no mês', () => {
+    const summary = buildStatement([
+      { date: '2026-06-02', description: '02 FITNESS UP GROUP SGPS', amount: 39.2, type: 'expense' },
+      { date: '2026-06-18', description: '18 FITNESS UP GROUP SGPS', amount: 22.6, type: 'expense' },
+      { date: '2026-06-05', description: 'NETFLIX.COM', amount: 12.99, type: 'expense' },
+    ]);
+    expect(summary.subscriptions).toHaveLength(2);
+    const gym = summary.subscriptions.find((s) => s.name.includes('FITNESS'))!;
+    expect(gym.price).toBeCloseTo(61.8, 2);
+  });
+});
 
 describe('pipeline completo (ingestStatement)', () => {
   it('Revolut: mês dominante maio, dias de abril excluídos, agregados corretos', () => {

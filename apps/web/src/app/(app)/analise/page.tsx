@@ -10,11 +10,11 @@ import type { Insight } from '@optifi/core';
 
 // Limpeza à Revolut: cor SÓ na semântica de dinheiro — fuga (perda) vermelha,
 // poupança (ganho) verde. Alertas e conquistas são neutros.
-const KIND_STYLE: Record<string, { color: string; bg: string; badgeClass: string; labelKey: DictKey }> = {
-  leak: { color: 'var(--tx2)', bg: 'var(--card2)', badgeClass: 'cat-leak', labelKey: 'ins_cat_leak' },
-  alert: { color: 'var(--tx2)', bg: 'var(--card2)', badgeClass: 'cat-alert', labelKey: 'ins_cat_alert' },
-  savings: { color: 'var(--tx2)', bg: 'var(--card2)', badgeClass: 'cat-savings', labelKey: 'ins_cat_savings' },
-  achievement: { color: 'var(--tx2)', bg: 'var(--card2)', badgeClass: 'cat-achievement', labelKey: 'ins_cat_ach' },
+const KIND_STYLE: Record<string, { bg: string; labelKey: DictKey }> = {
+  leak: { bg: 'var(--card2)', labelKey: 'ins_cat_leak' },
+  alert: { bg: 'var(--card2)', labelKey: 'ins_cat_alert' },
+  savings: { bg: 'var(--card2)', labelKey: 'ins_cat_savings' },
+  achievement: { bg: 'var(--card2)', labelKey: 'ins_cat_ach' },
 };
 
 const KIND_ICON: Record<string, React.ReactNode> = {
@@ -206,6 +206,40 @@ export default function InsightsPage() {
     return '';
   };
 
+  /**
+   * Título do cartão. Antes todos mostravam só o tipo ("Alerta", "Perda"), o
+   * que dava quatro cartões seguidos com o mesmo cabeçalho e obrigava a ler o
+   * corpo de cada um para saber qual interessava. Quando o cartão é sobre um
+   * serviço concreto o título é o nome desse serviço — é o que o utilizador
+   * reconhece no extrato.
+   */
+  const insightTitle = (ins: Insight): string => {
+    const p = ins.params;
+    if (ins.kind === 'leak' && p.category) return catLabel(String(p.category));
+    if (p.name && (ins.id.startsWith('sub_') || ins.id === 'top_merchant')) return String(p.name);
+    const byId: Record<string, DictKey> = {
+      ins_subs_review: 'inst_subs_review',
+      ins_subs_ratio: 'inst_subs_ratio',
+      ins_rate_achievement: 'inst_rate_achievement',
+      small_purchases: 'inst_small_purchases',
+      biggest_expense: 'inst_biggest_expense',
+      housing_share: 'inst_housing_share',
+      rate_gap: 'inst_rate_gap',
+      leak_fv: 'inst_leak_fv',
+      daily_avg: 'inst_daily_avg',
+      weekend_spend: 'inst_weekend_spend',
+      cat_concentration: 'inst_cat_concentration',
+      month_deficit: 'inst_month_deficit',
+      invest_capacity: 'inst_invest_capacity',
+      renegotiate_two: 'inst_renegotiate',
+      goal_accelerate: 'inst_goal_accelerate',
+    };
+    if (byId[ins.id]) return t(byId[ins.id]!);
+    if (ins.id.startsWith('sub_dup_')) return t('inst_sub_dup');
+    if (ins.id.startsWith('goal_boost_')) return t('inst_goal_boost');
+    return t(KIND_STYLE[ins.kind]!.labelKey);
+  };
+
   // Anti-densidade: os cartões ESTRATÉGICOS (visão geral) vêm primeiro, seguidos
   // das poupanças concretas. Só os primeiros ficam à vista; o resto (observações
   // e conquistas) abre com "Ver mais" — a página não afoga quem chega.
@@ -285,11 +319,11 @@ export default function InsightsPage() {
             <div className="ins-header">
               <div className="ins-icon-wrap" style={{ background: style.bg }}>{KIND_ICON[ins.kind]}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className={`cat-badge ${style.badgeClass}`}>{t(style.labelKey)}</span>
-                  {ins.saving > 0 && <span className="ins-saving-badge">+{fmtEur(ins.saving)}/mês</span>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                  <span className="ins-title" style={{ marginBottom: 0 }}>{insightTitle(ins)}</span>
+                  {ins.saving > 0 && <span className="ins-saving-badge" style={{ marginBottom: 0, flexShrink: 0 }}>+{fmtEur(ins.saving)}/mês</span>}
                 </div>
-                <div className="ins-desc" style={{ marginTop: 3 }}>{insightText(ins)}</div>
+                <div className="ins-desc" style={{ marginTop: 4 }}>{insightText(ins)}</div>
                 {ins.params.fv10 !== undefined && (
                   <details className="invest-more">
                     <summary>

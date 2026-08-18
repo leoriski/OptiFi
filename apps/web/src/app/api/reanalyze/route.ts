@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { categorizeStatement, normalizeDescription } from '@optifi/ingest';
+import { categorizeStatement, groupSubscriptions } from '@optifi/ingest';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rateLimit';
 
@@ -81,18 +81,12 @@ export async function POST() {
       .eq('user_id', user.id);
     const verdictByName = new Map((oldSubs ?? []).map((s) => [s.name.toLowerCase(), s.user_status]));
 
-    // Preço = o valor mais recente do mesmo descritivo (apanha subidas de preço).
-    const subsMap = new Map<string, { name: string; price: number; date: string }>();
-    for (const tx of recategorized) {
-      if (tx.type !== 'expense' || tx.category !== 'subscricoes') continue;
-      const key = normalizeDescription(tx.description);
-      const existing = subsMap.get(key);
-      if (!existing || tx.date > existing.date) subsMap.set(key, { name: tx.description, price: tx.amount, date: tx.date });
-    }
+    // Mesmo agrupamento da importação: um serviço = uma linha.
+    const grouped = groupSubscriptions(recategorized);
     await supabase.from('subscriptions').delete().eq('user_id', user.id).eq('import_id', imp.id);
-    if (subsMap.size > 0) {
+    if (grouped.length > 0) {
       const { error: subErr } = await supabase.from('subscriptions').insert(
-        [...subsMap.values()].map((s) => ({
+        grouped.map((s) => ({
           user_id: user.id,
           import_id: imp.id,
           name: s.name,

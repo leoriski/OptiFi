@@ -154,7 +154,7 @@ export default function GoalsPage() {
           return (
             <div className="card" style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 13, color: 'var(--tx)', fontWeight: 700, lineHeight: 1.5 }}>
-                {fill(t('goals_start_nudge'), { surplus: fmtEur(surplus), safe: fmtEur0(safe) })}
+                {fill(t('goals_start_nudge'), { month: monthLabel(imp.statement_month, lang), surplus: fmtEur(surplus), safe: fmtEur0(safe) })}
               </div>
               <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 6 }}>{t('goals_start_note')}</div>
             </div>

@@ -14,7 +14,7 @@ export { parseCsv, sniffDelimiter } from './csv.js';
 export { decodeStatementText } from './text.js';
 export { parseEuroAmount, parseStatementDate, normalizeDescription } from './values.js';
 export { assignFingerprints } from './fingerprint.js';
-export { buildStatement, categorizeStatement } from './statement.js';
+export { buildStatement, categorizeStatement, groupSubscriptions } from './statement.js';
 export { parseWithMapping } from './adapters/generic.js';
 export { autoParse } from './adapters/auto.js';
 export { parsePdfStatementLines, pdfContentStart } from './pdf.js';

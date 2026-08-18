@@ -71,3 +71,28 @@ describe('descritivos REAIS dos extratos (maiúsculas, sem acentos, prefixos)', 
     expect(categorizeMerchant(name)).toBe(expected);
   });
 });
+
+// O extrato corta o nome do comerciante a um número fixo de caracteres. Sem
+// tolerar a truncagem, os comerciantes mais frequentes de um extrato português
+// caíam todos em 'outros' e a categoria "não sei o que isto é" ficava a maior.
+describe('descritivos TRUNCADOS pelo banco', () => {
+  it.each([
+    ['Compras C Pingo D', 'alimentacao'],
+    ['Compras C Contin', 'alimentacao'],
+    ['Compras C Mercadon', 'alimentacao'],
+    ['Compras C Tiffosi', 'lazer'],
+    ['Compras C Restaur', 'lazer'],
+    // Carregar a carteira de outro banco é dinheiro do próprio a mudar de sítio
+    ['Car Wal Crt Deb Revol', 'transferencias'],
+    // …e o que continua desconhecido continua honestamente em 'outros'
+    ['Compras C Tiago F', 'outros'],
+    ['Oney Bank Sucursal Em', 'outros'],
+  ])('%s → %s', (name, expected) => {
+    expect(categorizeMerchant(name)).toBe(expected);
+  });
+
+  it('não deixa uma palavra inteira passar por truncagem', () => {
+    // "transferencia" é o início de "transferencia recebida", mas está inteira
+    expect(categorizeMerchant('Renda Casa Transferencia')).toBe('habitacao');
+  });
+});

@@ -1,4 +1,4 @@
-import { categorizeMerchant, type CategoryKey } from '@optifi/core';
+import { baseServiceName, categorizeMerchant, type CategoryKey } from '@optifi/core';
 import type { CategorizedTransaction, ParsedTransaction, StatementSummary } from './types.js';
 import { IngestError } from './types.js';
 import { assignFingerprints } from './fingerprint.js';
@@ -66,6 +66,39 @@ export function categorizeStatement<T extends { description: string; type: 'inco
 }
 
 /**
+ * Subscrições do mês: despesas da categoria 'subscricoes' agrupadas pelo NOME
+ * BASE do serviço — sem o dia nem o código de terminal que o banco cola à
+ * frente. Sem isto, "02 FITNESS UP GROUP" e "18 FITNESS UP GROUP" apareciam
+ * como dois ginásios diferentes e a app pedia para cancelar o mesmo serviço
+ * duas vezes. O preço é o que o serviço custou NO MÊS (soma das cobranças),
+ * que é a resposta à pergunta "quanto me sai isto por mês".
+ *
+ * Vive aqui, e não em cada chamador, porque a importação e a re-análise têm de
+ * chegar exatamente à mesma lista — senão re-analisar desfazia o agrupamento.
+ */
+export function groupSubscriptions(
+  txs: { description: string; amount: number; date: string; type: 'income' | 'expense'; category: string }[],
+): { name: string; price: number }[] {
+  const byService = new Map<string, { name: string; price: number; date: string }>();
+  for (const tx of txs) {
+    if (tx.type !== 'expense' || tx.category !== 'subscricoes') continue;
+    const key = baseServiceName(tx.description) || normalizeDescription(tx.description);
+    const existing = byService.get(key);
+    if (!existing) {
+      byService.set(key, { name: tx.description, price: tx.amount, date: tx.date });
+      continue;
+    }
+    existing.price = round2(existing.price + tx.amount);
+    // O descritivo mais recente é o que o utilizador reconhece hoje.
+    if (tx.date >= existing.date) {
+      existing.name = tx.description;
+      existing.date = tx.date;
+    }
+  }
+  return [...byService.values()].map(({ name, price }) => ({ name, price })).sort((a, b) => b.price - a.price);
+}
+
+/**
  * Constrói o resumo do mês fechado a partir dos movimentos normalizados:
  * escolhe o mês dominante do ficheiro (o utilizador pode exportar períodos
  * com dias soltos de meses vizinhos), filtra para esse mês, categoriza,
@@ -102,20 +135,7 @@ export function buildStatement(txs: ParsedTransaction[], endingBalance?: number)
     }
   }
 
-  // Subscrições: despesas da categoria subscricoes, agrupadas por descritivo
-  // normalizado; o preço é o valor mais recente (apanha subidas de preço).
-  const subsMap = new Map<string, { name: string; price: number; date: string }>();
-  for (const tx of transactions) {
-    if (tx.type !== 'expense' || tx.category !== 'subscricoes') continue;
-    const key = normalizeDescription(tx.description);
-    const existing = subsMap.get(key);
-    if (!existing || tx.date > existing.date) {
-      subsMap.set(key, { name: tx.description, price: tx.amount, date: tx.date });
-    }
-  }
-  const subscriptions = [...subsMap.values()]
-    .map(({ name, price }) => ({ name, price }))
-    .sort((a, b) => b.price - a.price);
+  const subscriptions = groupSubscriptions(transactions);
 
   return {
     statementMonth,

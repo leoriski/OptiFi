@@ -103,7 +103,7 @@ function round2(n: number): number {
  * terminal/POS ("compra", "estrang", códigos e cartões "*5297", números
  * soltos à cabeça). "02 FITNESS UP GROUP" e "18 FITNESS UP GROUP" → o mesmo.
  */
-function baseServiceName(name: string): string {
+export function baseServiceName(name: string): string {
   return (name || '')
     .toLowerCase()
     .normalize('NFD')
