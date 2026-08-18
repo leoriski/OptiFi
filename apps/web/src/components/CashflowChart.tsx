@@ -39,7 +39,7 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
     const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
     const gr = v('--gr', '#22C55E');
     const re = v('--re', '#F43F5E');
-    const pr = v('--pr', '#1A6BFF');
+    const net = v('--chart-net', '#0EA5E9');
     const tx3 = v('--tx3', '#5C6781');
 
     // Gráfico misto (barras + linha): o tipo base é 'bar' e a linha vem do
@@ -54,10 +54,10 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
             type: 'line',
             label: labels.net,
             data: points.map((p) => p.income - p.expenses),
-            borderColor: pr,
-            backgroundColor: pr,
-            pointBackgroundColor: pr,
-            pointBorderColor: pr,
+            borderColor: net,
+            backgroundColor: net,
+            pointBackgroundColor: net,
+            pointBorderColor: net,
             pointRadius: 3.5,
             borderWidth: 2.5,
             tension: 0.35,
@@ -67,7 +67,7 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
             type: 'bar',
             label: labels.income,
             data: points.map((p) => p.income),
-            backgroundColor: gr + 'B3',
+            backgroundColor: gr,
             borderRadius: 4,
             borderSkipped: false,
             barPercentage: 0.9,
@@ -79,7 +79,7 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
             type: 'bar',
             label: labels.expenses,
             data: points.map((p) => p.expenses),
-            backgroundColor: re + 'A6',
+            backgroundColor: re,
             borderRadius: 4,
             borderSkipped: false,
             barPercentage: 0.9,

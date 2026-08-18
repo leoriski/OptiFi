@@ -148,24 +148,6 @@ export default function HomePage() {
     </div>
   );
 
-  // Lembrete de retenção: um novo mês fechou e ainda não o importaste.
-  const importReminder = cadence.missingPrevMonth ? (
-    <Link href="/atividade" className="import-reminder">
-      <div className="import-reminder-icon">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <path d="m7 10 5 5 5-5" />
-          <path d="M12 15V3" />
-        </svg>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="import-reminder-title">{fill(t('import_reminder_title'), { month: monthLabel(cadence.prevMonth, lang) })}</div>
-        <div className="import-reminder-sub">{t('import_reminder_sub')}</div>
-      </div>
-      <span className="import-reminder-cta">→</span>
-    </Link>
-  ) : null;
-
   if (!imported || !fs || !imp || !analysis) {
     return (
       <>
@@ -254,7 +236,6 @@ export default function HomePage() {
   return (
     <>
       {greeting}
-      {importReminder}
       {tipCard}
 
       {/* Défice do mês fechado — a Home não pode prometer poupança sem dizer

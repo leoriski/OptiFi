@@ -29,7 +29,20 @@ function isIosSafari(): boolean {
  */
 export function RegisterServiceWorker() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if (!('serviceWorker' in navigator)) return;
+
+    // Em desenvolvimento o worker faz mais mal que bem: guarda /_next/static/
+    // por cache-first, e em dev esses ficheiros mudam de conteúdo sem mudar de
+    // nome (em produção o nome traz o hash). Resultado: o browser servia código
+    // antigo e as alterações não apareciam. Aqui desregista-se e limpa-se, para
+    // quem já tenha um worker instalado de uma sessão anterior.
+    if (process.env.NODE_ENV !== 'production') {
+      void navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => void r.unregister()));
+      void caches?.keys().then((ks) => ks.forEach((k) => void caches.delete(k)));
+      return;
+    }
+
+    void navigator.serviceWorker.register('/sw.js').catch(() => {});
   }, []);
   return null;
 }

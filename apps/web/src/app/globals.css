@@ -24,6 +24,10 @@
   --nav-bg: rgba(11, 14, 20, 0.85);
   --sheet-bg: rgba(17, 21, 30, 0.97);
   --sheet-b: rgba(255, 255, 255, 0.08);
+  /* Linha "Sobra" do gráfico: azul fixo, independente do accent. Se seguisse
+     --pr, com o tema emerald ficavam dois verdes ao lado das barras de
+     receitas e não se distinguia um do outro. */
+  --chart-net: #38bdf8;
 }
 
 [data-mode='light'] {
@@ -43,6 +47,8 @@
   --nav-bg: rgba(255, 255, 255, 0.85);
   --sheet-bg: rgba(255, 255, 255, 0.98);
   --sheet-b: rgba(15, 22, 35, 0.08);
+  /* Sobre branco o #38bdf8 desaparece numa linha fina — desce-se um tom. */
+  --chart-net: #0ea5e9;
 }
 
 /* Accents — o padrão ("Neutro") é monocromático: o accent É a cor do texto.
@@ -99,6 +105,17 @@
   border: 1px solid var(--b);
 }
 .balcard::before {
+  display: none;
+}
+/* O protótipo repinta este cartão com o accent em modo claro através de
+   [data-mode="light"] .balcard, que ganha por especificidade às regras acima.
+   Repetimos o seletor para o cartão de saldo ficar igual a todos os outros:
+   um cartão não deve ter cor só por ser o primeiro da página. */
+[data-mode='light'] .balcard {
+  background: var(--card);
+  border-color: var(--b);
+}
+[data-mode='light'] .balcard::before {
   display: none;
 }
 
