@@ -18,6 +18,7 @@ import {
   Tooltip,
   type ChartConfiguration,
 } from 'chart.js';
+import { fmtEur, fmtEur0 } from '@/lib/format';
 
 Chart.register(BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Legend, Tooltip);
 
@@ -113,8 +114,10 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
             titleFont: { family: font, weight: 700 },
             bodyFont: { family: font },
             callbacks: {
+              // Mesmo formato do resto da app (€1.120,20) — o gráfico tinha o
+              // seu próprio formatador, à inglesa.
               label: (ctx: { dataset: { label?: string }; parsed: { y: number } }) =>
-                ` ${ctx.dataset.label ?? ''}: €${Number(ctx.parsed.y).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
+                ` ${ctx.dataset.label ?? ''}: ${fmtEur(Number(ctx.parsed.y))}`,
             },
           },
         },
@@ -128,7 +131,8 @@ export function CashflowChart({ points, labels }: { points: CashflowPoint[]; lab
             ticks: {
               color: tx3,
               font: { family: font, size: 10 },
-              callback: (val: string | number) => '€' + Number(val).toLocaleString('en-US'),
+              // Sem casas decimais: são marcas de escala, não valores exatos.
+              callback: (val: string | number) => fmtEur0(Number(val)),
               maxTicksLimit: 5,
             },
             beginAtZero: true,
