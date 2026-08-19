@@ -12,8 +12,10 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#0B0E14',
-    theme_color: '#0B0E14',
+    // Ecrã de arranque da PWA instalada: tem de ser a cor do modo padrão (claro),
+    // senão o utilizador vê um flash preto antes de a app abrir branca.
+    background_color: '#F7F8FA',
+    theme_color: '#F7F8FA',
     categories: ['finance', 'productivity'],
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

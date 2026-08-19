@@ -146,7 +146,7 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [nameDraft, setNameDraft] = useState('');
-  const [mode, setMode] = useState<Mode>('dark');
+  const [mode, setMode] = useState<Mode>('light');
   const [accent, setAccent] = useState<Accent>('emerald');
   const [drawer, setDrawer] = useState<DrawerId>(null);
   const [tipOn, setTipOn] = useState(true);
@@ -164,7 +164,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const root = document.documentElement;
-    setMode(root.getAttribute('data-mode') === 'light' ? 'light' : 'dark');
+    setMode(root.getAttribute('data-mode') === 'dark' ? 'dark' : 'light');
     const a = root.getAttribute('data-accent') as Accent | null;
     setAccent(a && ['brand', 'amber', 'violet', 'emerald'].includes(a) ? a : 'emerald');
     setTipOn(localStorage.getItem('optifi_tip_home') !== 'off');
@@ -388,11 +388,12 @@ export default function ProfilePage() {
         <div className="card">
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx2)', marginBottom: 8 }}>{t('profile_theme_mode')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={pill(mode === 'dark')} onClick={() => applyMode('dark')}>
-              {t('profile_mode_dark')}
-            </button>
+            {/* O claro vem primeiro por ser o padrão da app. */}
             <button style={pill(mode === 'light')} onClick={() => applyMode('light')}>
               {t('profile_mode_light')}
+            </button>
+            <button style={pill(mode === 'dark')} onClick={() => applyMode('dark')}>
+              {t('profile_mode_dark')}
             </button>
           </div>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx2)', margin: '16px 0 8px' }}>{t('profile_theme_accent')}</div>
