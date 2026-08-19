@@ -6,12 +6,15 @@ type CookieToSet = { name: string; value: string; options?: CookieOptions };
 // Rotas acessíveis sem sessão. Tudo o resto exige utilizador autenticado.
 const PUBLIC_PATHS = ['/login', '/signup', '/forgot', '/update-password', '/verify', '/auth', '/privacidade', '/termos'];
 // Recursos que têm de ser acessíveis sem sessão: o service worker (ficheiro
-// estático), o manifest da PWA (o browser lê-o sem cookies antes de instalar)
-// e o job de lembretes (protegido pelo próprio CRON_SECRET).
-const PUBLIC_EXACT = ['/sw.js', '/manifest.webmanifest', '/offline.html', '/api/cron/reminders'];
+// estático) e o manifest da PWA (o browser lê-o sem cookies antes de instalar).
+const PUBLIC_EXACT = ['/sw.js', '/manifest.webmanifest', '/offline.html'];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_EXACT.includes(pathname)) return true;
+  // Os jobs de cron não têm sessão — cada um valida o seu CRON_SECRET. Estava
+  // aqui só /api/cron/reminders pelo nome, e a rota seguinte que se criou ficou
+  // a levar 401 do middleware sem nunca chegar ao handler.
+  if (pathname.startsWith('/api/cron/')) return true;
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
 

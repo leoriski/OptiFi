@@ -167,17 +167,18 @@ export default function ProfilePage() {
     setMode(root.getAttribute('data-mode') === 'dark' ? 'dark' : 'light');
     const a = root.getAttribute('data-accent') as Accent | null;
     setAccent(a && ['brand', 'amber', 'violet', 'emerald'].includes(a) ? a : 'emerald');
-    setTipOn(localStorage.getItem('optifi_tip_home') !== 'off');
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''));
     void supabase
       .from('profiles')
-      .select('name')
+      .select('name,daily_tips')
       .limit(1)
       .then(({ data }) => {
-        const n = (data?.[0]?.name as string | null) ?? '';
+        const row = data?.[0];
+        const n = (row?.name as string | null) ?? '';
         setName(n);
         setNameDraft(n);
+        setTipOn(row?.daily_tips !== false);
       });
   }, []);
 
@@ -204,10 +205,18 @@ export default function ProfilePage() {
     setDrawer(null);
   }
 
-  function toggleTip() {
+  // A dica é enviada pelo cron, não desenhada no browser — a preferência tem de
+  // estar na base para o servidor a conseguir ler.
+  async function toggleTip() {
     const next = !tipOn;
     setTipOn(next);
-    localStorage.setItem('optifi_tip_home', next ? 'on' : 'off');
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({ daily_tips: next }).eq('id', user.id);
+    if (error) setTipOn(!next);
   }
 
   async function logout() {

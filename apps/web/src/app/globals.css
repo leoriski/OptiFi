@@ -128,15 +128,6 @@
   display: none;
 }
 
-/* Dica do dia: neutra (era âmbar) */
-.tip-card {
-  background: var(--card);
-  border: 1px solid var(--b);
-}
-.tip-lbl {
-  color: var(--tx3);
-}
-
 /* Selo "Seguro": neutro (era verde) */
 .secure-badge {
   background: var(--card2);

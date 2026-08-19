@@ -16,23 +16,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { CashflowChart, type CashflowPoint } from '@/components/CashflowChart';
 import { PlanDrawer } from '@/components/PlanDrawer';
 
-const TIPS_PT = [
-  'Regra dos 24h: antes de qualquer compra acima de €50 espera 24h. Elimina 80% das compras por impulso.',
-  'Rever as subscrições uma vez por mês evita pagar por serviços esquecidos.',
-  'Reservar dinheiro para metas no início do mês torna a poupança automática — o que sobra é que se gasta.',
-  'Compras pequenas repetidas pesam mais do que uma compra grande. Soma os cafés do mês e vê.',
-  'Um limite por categoria funciona melhor do que um orçamento total: controlas onde dói.',
-  'Paga-te primeiro: transfere para as metas no dia em que recebes, não no fim do mês.',
-];
-const TIPS_EN = [
-  '24h rule: before any purchase over €50, wait 24h. It kills 80% of impulse buys.',
-  'Reviewing subscriptions once a month avoids paying for forgotten services.',
-  'Reserving money for goals early in the month makes saving automatic — you spend what is left.',
-  'Small repeated purchases weigh more than one big buy. Add up the month’s coffees.',
-  'A per-category limit beats one total budget: you control where it hurts.',
-  'Pay yourself first: move money to goals on payday, not at month end.',
-];
-
 // Ícone automático da meta a partir do nome (o picker visual vem depois).
 function GoalIcon({ name, size = 22 }: { name: string; size?: number }) {
   const n = name.toLowerCase();
@@ -90,10 +73,6 @@ export default function HomePage() {
 
   const hour = new Date().getHours();
   const greetKey: DictKey = hour < 12 ? 'greeting_morning' : hour < 20 ? 'greeting_afternoon' : 'greeting_evening';
-  const tips = lang === 'pt' ? TIPS_PT : TIPS_EN;
-  const tip = tips[new Date().getDate() % tips.length]!;
-  // Preferência do Perfil → Notificações ("Dica do dia na Home")
-  const tipEnabled = typeof window === 'undefined' || localStorage.getItem('optifi_tip_home') !== 'off';
   const currMonth = monthLabel(planMonth, lang);
 
   const chartLabels = useMemo(() => ({ net: t('chart_net'), income: t('chart_income'), expenses: t('chart_expenses') }), [t]);
@@ -132,27 +111,10 @@ export default function HomePage() {
     </div>
   );
 
-  const tipCard = !tipEnabled ? null : (
-    <div className="tip-card">
-      <div className="tip-icon" style={{ color: 'var(--tx2)' }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="17" height="17">
-          <path d="M9 18h6" />
-          <path d="M10 22h4" />
-          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-        </svg>
-      </div>
-      <div>
-        <div className="tip-lbl">{t('tip_lbl')}</div>
-        <div className="tip-text">{tip}</div>
-      </div>
-    </div>
-  );
-
   if (!imported || !fs || !imp || !analysis) {
     return (
       <>
         {greeting}
-        {tipCard}
         <EmptyImportState msgKey="empty_home" />
       </>
     );
@@ -342,7 +304,6 @@ export default function HomePage() {
     <>
       {greeting}
       {mealStrip}
-      {tipCard}
 
       {/* Défice do mês fechado — a Home não pode prometer poupança sem dizer
           primeiro que o mês fechou a vermelho. Vem antes do Money Leak e diz
