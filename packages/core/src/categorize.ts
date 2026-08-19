@@ -34,6 +34,16 @@ export const MERCHANT_RULES: MerchantRule[] = [
   // banco; contá-lo aqui como despesa seria contá-lo duas vezes.
   { key: 'transferencias', patterns: ['car wal', 'carregamento wallet', 'carreg wallet'] },
 
+  // Levantamentos em numerário. Vêm ANTES dos comerciantes porque o descritivo
+  // traz o sítio onde está a caixa: "ATM Pingo Doce- Fer." caía em alimentação
+  // e punha €920 de dinheiro levantado a contar como compras de supermercado.
+  // Fica em 'outros' — que é a categoria que significa "não sei em que foi
+  // gasto" — e não em 'transferencias': o dinheiro saiu mesmo da conta e foi
+  // gasto, ao contrário de um carregamento de carteira, cujo gasto aparece no
+  // extrato do outro banco. Escondê-lo faria a app dizer que se gasta menos do
+  // que se gasta.
+  { key: 'outros', patterns: ['atm ', 'lev atm', 'levantamento', 'lev mb', 'lev multibanco', 'numerario', 'saque'] },
+
   // Alimentação = comida ESSENCIAL (supermercado/mercearia). Comer fora é lazer.
   { key: 'alimentacao', patterns: ['pingo doce', 'continente', 'lidl', 'aldi', 'intermarche', 'minipreco', 'auchan', 'jumbo', 'mercadona', 'el corte ingles', 'supermercado', 'mercado', 'frutaria', 'talho', 'mercearia', 'padaria'] },
   // Restauração / fast-food / delivery = saídas → LAZER (pedido do produto:
@@ -108,12 +118,27 @@ function matchesPattern(desc: string, pat: string): boolean {
   return false;
 }
 
+/**
+ * Tira a referência numérica do fim ("COMPRAS C.DEB PINGO D 1779973586").
+ *
+ * A tolerância à truncagem acima só olha para o FIM da string, e o descritivo
+ * real do banco cola quase sempre uma referência a seguir ao nome truncado.
+ * Essa referência tapava o nome e os supermercados caíam em 'outros' — que é
+ * precisamente o que a tolerância existe para evitar. Num extrato real isto
+ * punha a maior categoria do mês a chamar-se "não sei o que isto é".
+ */
+function stripRef(s: string): string {
+  return s.replace(/\s\*?\d{4,}$/, '').trim();
+}
+
 /** Match (sem acentos, tolerante a truncagem) contra a lista ordenada; desconhecidos → outros. */
 export function categorizeMerchant(name: string): CategoryKey {
   const lower = norm(name);
+  const bare = stripRef(lower);
   for (const rule of MERCHANT_RULES) {
     for (const pat of rule.patterns) {
       if (matchesPattern(lower, pat)) return rule.key;
+      if (bare !== lower && matchesPattern(bare, pat)) return rule.key;
     }
   }
   return 'outros';

@@ -146,6 +146,54 @@ function cleanDescription(s: string): string {
   return s.replace(/€/g, ' ').replace(/\s+/g, ' ').replace(/^[\s·|:_-]+|[\s·|:_-]+$/g, '').trim().slice(0, 80).trim();
 }
 
+/** Um dia sozinho no início do descritivo: "01 COM TRF MBWAY". */
+const DAY_PREFIX = /^(\d{1,2})\s+(?=\S)/;
+
+/** O dia existe mesmo nesse mês (30 de Fevereiro não). */
+function validDay(year: number, month: number, day: number): boolean {
+  return day >= 1 && day <= new Date(year, month, 0).getDate();
+}
+
+/**
+ * Recupera o dia quando a coluna de data do extrato é CONSTANTE e o dia real
+ * ficou colado ao início do descritivo.
+ *
+ * Há extratos em que a primeira coluna é a data de processamento — igual em
+ * todas as linhas — e o dia do movimento vem logo a seguir, sozinho, sem mês.
+ * O parser lia a data constante e o dia ia parar ao descritivo: num extrato
+ * real de Junho os 51 movimentos ficaram todos no dia 26 e a descrição era
+ * "01 COM TRF MBWAY". Isso destrói tudo o que depende da data — o calendário,
+ * o ritmo diário, o peso do fim de semana — e ainda parte a junção por
+ * comerciante: "02 FITNESS UP" e "18 FITNESS UP" passavam por dois ginásios
+ * diferentes e apareciam como duas subscrições.
+ *
+ * Só corrige com as DUAS provas presentes — data única em todas as linhas E a
+ * larga maioria dos descritivos a começar por um dia válido — porque um extrato
+ * legítimo de um só dia não pode ser mexido.
+ */
+function recoverDayColumn(rows: RawRow[]): void {
+  if (rows.length < 5) return;
+  const stamp = rows[0]!.date;
+  if (!rows.every((r) => r.date === stamp)) return;
+  const year = +stamp.slice(0, 4);
+  const month = +stamp.slice(5, 7);
+
+  const dayOf = (r: RawRow): number | null => {
+    const m = r.description.match(DAY_PREFIX);
+    if (!m) return null;
+    const day = +m[1]!;
+    return validDay(year, month, day) ? day : null;
+  };
+  if (rows.filter((r) => dayOf(r) !== null).length < rows.length * 0.8) return;
+
+  for (const r of rows) {
+    const day = dayOf(r);
+    if (day === null) continue;
+    r.date = ymd(year, month, day)!;
+    r.description = cleanDescription(r.description.replace(DAY_PREFIX, '')) || 'Movimento';
+  }
+}
+
 export function parsePdfStatementLines(lines: string[]): ParseResult {
   const { year, months } = detectPeriod(lines);
   const rows: RawRow[] = [];
@@ -188,6 +236,8 @@ export function parsePdfStatementLines(lines: string[]): ParseResult {
   }
 
   if (rows.length === 0) throw new IngestError('pdf_unreadable', 'PDF: sem movimentos reconhecíveis');
+
+  recoverDayColumn(rows);
 
   // Modo assinado (Santander): há montantes negativos → positivo = entrada.
   // Senão (Millennium): resolve tudo pela variação do saldo (ordem do ficheiro).

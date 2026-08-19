@@ -22,6 +22,19 @@ describe('Portuguese merchant categorization', () => {
   });
 });
 
+describe('levantamentos em numerário não são compras no sítio da caixa', () => {
+  it.each([
+    ['ATM Pingo Doce- Fer. 0000251862', 'outros'], // não é supermercado
+    ['ATM Mercado Bolhao 0000251862', 'outros'],
+    ['LEV ATM 2088 BESCL Matosinhos R 1 de Maio, 6', 'outros'],
+    ['LEVANTAMENTO DE NUMERARIO-5297', 'outros'],
+    ['LEV MULTIBANCO', 'outros'],
+    ['COMPRAS C.DEB PINGO D 1779973586', 'alimentacao'], // compra a sério mantém-se
+  ])('%s → %s', (name, expected) => {
+    expect(categorizeMerchant(name)).toBe(expected);
+  });
+});
+
 describe('regras adicionadas com dados realistas (renda, cafés)', () => {
   it.each([
     ['Renda Casa Transferencia', 'habitacao'],

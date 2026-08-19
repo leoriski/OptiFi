@@ -62,6 +62,42 @@ describe('parser PDF — Santander (datas "01-06", montante assinado, exclui des
   });
 });
 
+describe('parser PDF — coluna de data constante com o dia solto no descritivo', () => {
+  // Extrato real: a 1ª coluna é a data de processamento (igual em todas as
+  // linhas) e o dia do movimento vem a seguir, sozinho. Sem recuperação, os 51
+  // movimentos de Junho ficavam todos em 26/06 e o ginásio aparecia duas vezes
+  // ("02 FITNESS UP" e "18 FITNESS UP" contavam como comerciantes diferentes).
+  const lines = [
+    'Período de 01-06-2026 a 30-06-2026',
+    '26-06 01 COM TRF MBWAY -0,10 694,92',
+    '26-06 02 FITNESS UP GROUP SGPS -43,60 651,32',
+    '26-06 06 ATM Pingo Doce- Fer. 0000251862 -200,00 451,32',
+    '26-06 18 FITNESS UP GROUP SGPS -22,60 428,72',
+    '26-06 30 TFI Isabel Jorge Camb 100,00 528,72',
+  ];
+
+  it('usa o dia solto como data e tira-o da descrição', () => {
+    const r = parsePdfStatementLines(lines);
+    expect(r.txs.map((t) => t.date)).toEqual(['2026-06-01', '2026-06-02', '2026-06-06', '2026-06-18', '2026-06-30']);
+    expect(r.txs[1]!.description).toBe('FITNESS UP GROUP SGPS');
+    expect(r.txs[3]!.description).toBe('FITNESS UP GROUP SGPS'); // mesmo comerciante que o [1]
+    expect(r.txs[2]!.description).toBe('ATM Pingo Doce- Fer. 0000251862');
+  });
+
+  it('não mexe num extrato legítimo de um só dia', () => {
+    const r = parsePdfStatementLines([
+      'Período de 01-06-2026 a 30-06-2026',
+      '03-06 03-06 COMPRA A -10,00 90,00',
+      '03-06 03-06 COMPRA B -10,00 80,00',
+      '03-06 03-06 COMPRA C -10,00 70,00',
+      '03-06 03-06 COMPRA D -10,00 60,00',
+      '03-06 03-06 COMPRA E -10,00 50,00',
+    ]);
+    expect(new Set(r.txs.map((t) => t.date))).toEqual(new Set(['2026-06-03']));
+    expect(r.txs[0]!.description).toBe('COMPRA A');
+  });
+});
+
 describe('parser PDF — casos gerais', () => {
   it('montante assinado sem saldo: negativo=despesa, positivo=receita', () => {
     const r = parsePdfStatementLines([
