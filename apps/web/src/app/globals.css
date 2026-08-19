@@ -51,16 +51,35 @@
   --chart-net: #0ea5e9;
 }
 
-/* Accents — o padrão ("Neutro") é monocromático: o accent É a cor do texto.
-   Tudo o que usava --pr (nav ativa, números, links, chips, gráfico) fica
-   preto/branco automaticamente. Os accents coloridos continuam opcionais. */
+/* Accents — o verde é o padrão: é a cor da marca e é o que se vê sem ter de ir
+   ao Perfil escolher nada. Este bloco vem PRIMEIRO de propósito: `:root` e
+   `[data-accent='x']` têm a mesma especificidade, por isso ganha quem vier
+   depois no ficheiro — se o padrão ficasse no fim, pintava a app de verde
+   mesmo com outro accent escolhido. Superfícies continuam neutras; a cor vive
+   só em --pr/--ac. */
 :root,
+[data-accent='emerald'] {
+  --pr: #10b981;
+  --prd: #047857;
+  --ac: #5eead4;
+  --brand-gradient: linear-gradient(135deg, #10b981, #5eead4);
+  --theme-glow: rgba(16, 185, 129, 0.45);
+}
+/* Sobre branco o #10b981 não chega para texto branco por cima (≈2,5:1). */
+:root[data-mode='light'],
+[data-mode='light'][data-accent='emerald'] {
+  --pr: #047857;
+}
+/* "Neutro" — monocromático: o accent É a cor do texto. */
 [data-accent='brand'] {
   --pr: var(--tx);
   --prd: var(--tx2);
   --ac: var(--tx2);
   --brand-gradient: var(--tx);
   --theme-glow: transparent;
+}
+[data-mode='light'][data-accent='brand'] {
+  --pr: var(--tx);
 }
 [data-accent='amber'] {
   --pr: #f59e0b;
@@ -81,16 +100,6 @@
 }
 [data-mode='light'][data-accent='violet'] {
   --pr: #6d28d9;
-}
-[data-accent='emerald'] {
-  --pr: #10b981;
-  --prd: #047857;
-  --ac: #5eead4;
-  --brand-gradient: linear-gradient(135deg, #10b981, #5eead4);
-  --theme-glow: rgba(16, 185, 129, 0.45);
-}
-[data-mode='light'][data-accent='emerald'] {
-  --pr: #047857;
 }
 
 /* ══════════════════════════════════════════════════════════════════

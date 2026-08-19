@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 
 // Aplica tema guardado antes do primeiro paint (evita flash). Espelha o
 // applyTheme() do protótipo: modo + accent em localStorage.
-const themeInit = `(function(){try{var m=localStorage.getItem('optifi_mode');if(m!=='light')m='dark';var a=localStorage.getItem('optifi_accent');if(['brand','amber','violet','emerald'].indexOf(a)<0)a='brand';var r=document.documentElement;r.setAttribute('data-mode',m);r.setAttribute('data-accent',a);}catch(e){}})();`;
+const themeInit = `(function(){try{var m=localStorage.getItem('optifi_mode');if(m!=='light')m='dark';var a=localStorage.getItem('optifi_accent');if(['brand','amber','violet','emerald'].indexOf(a)<0)a='emerald';var r=document.documentElement;r.setAttribute('data-mode',m);r.setAttribute('data-accent',a);}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -49,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lang: Lang = langCookie === 'en' ? 'en' : 'pt';
 
   return (
-    <html lang={lang === 'pt' ? 'pt-PT' : 'en'} data-mode="dark" data-accent="brand" suppressHydrationWarning>
+    <html lang={lang === 'pt' ? 'pt-PT' : 'en'} data-mode="dark" data-accent="emerald" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         {/* O iOS anterior ao 16.4 ignora o manifest: sem esta meta com o prefixo

@@ -22,11 +22,12 @@ type Mode = 'dark' | 'light';
 type Accent = 'brand' | 'amber' | 'violet' | 'emerald';
 type DrawerId = null | 'lang' | 'name' | 'theme' | 'security' | 'notif' | 'help' | 'about';
 
+// O verde vem primeiro por ser o padrão da app.
 const ACCENTS: { id: Accent; labelKey: DictKey; swatch: string }[] = [
+  { id: 'emerald', labelKey: 'accent_emerald', swatch: 'linear-gradient(135deg,#10B981,#5EEAD4)' },
   { id: 'brand', labelKey: 'accent_brand', swatch: 'linear-gradient(135deg,#0f1623,#9aa7bd)' },
   { id: 'amber', labelKey: 'accent_amber', swatch: 'linear-gradient(135deg,#F59E0B,#FFC44D)' },
   { id: 'violet', labelKey: 'accent_violet', swatch: 'linear-gradient(135deg,#7C5CFF,#B794FF)' },
-  { id: 'emerald', labelKey: 'accent_emerald', swatch: 'linear-gradient(135deg,#10B981,#5EEAD4)' },
 ];
 
 const ICON_STROKE = { fill: 'none', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -146,7 +147,7 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
   const [nameDraft, setNameDraft] = useState('');
   const [mode, setMode] = useState<Mode>('dark');
-  const [accent, setAccent] = useState<Accent>('brand');
+  const [accent, setAccent] = useState<Accent>('emerald');
   const [drawer, setDrawer] = useState<DrawerId>(null);
   const [tipOn, setTipOn] = useState(true);
   const [pushOn, setPushOn] = useState(false);
@@ -165,7 +166,7 @@ export default function ProfilePage() {
     const root = document.documentElement;
     setMode(root.getAttribute('data-mode') === 'light' ? 'light' : 'dark');
     const a = root.getAttribute('data-accent') as Accent | null;
-    setAccent(a && ['brand', 'amber', 'violet', 'emerald'].includes(a) ? a : 'brand');
+    setAccent(a && ['brand', 'amber', 'violet', 'emerald'].includes(a) ? a : 'emerald');
     setTipOn(localStorage.getItem('optifi_tip_home') !== 'off');
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''));
@@ -236,7 +237,7 @@ export default function ProfilePage() {
     .slice(0, 2)
     .map((p) => p[0]!.toUpperCase())
     .join('');
-  const accentLabel = t(ACCENTS.find((a) => a.id === accent)?.labelKey ?? 'accent_brand');
+  const accentLabel = t(ACCENTS.find((a) => a.id === accent)?.labelKey ?? 'accent_emerald');
   const modeLabel = t(mode === 'dark' ? 'profile_mode_dark' : 'profile_mode_light');
 
   const pill = (active: boolean): React.CSSProperties => ({
