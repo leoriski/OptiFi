@@ -5,6 +5,9 @@
     "packages/*",
     "apps/*"
   ],
+  "overrides": {
+    "react-is": "^19.2.0"
+  },
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
