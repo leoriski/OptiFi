@@ -335,6 +335,14 @@ const pt = {
   bal_unpaid: 'Por pagar',
   bal_confirm_title: 'Alguma destas já saiu da conta?',
   bal_confirm_sub: 'Tens estas despesas apontadas mas ainda por pagar. Marca as que o banco já debitou — o saldo que estás a escrever já as inclui.',
+  // Subscrições que ainda não estão nas despesas do mês: saem da conta na mesma,
+  // mas a app não sabe o dia — por isso mostra a conta e deixa o utilizador
+  // decidir, em vez de descontar às cegas e arriscar contar duas vezes.
+  subs_due_title: 'Ainda faltam pagar as subscrições',
+  subs_due_sub: 'Estes {n} serviços custam {amount} por mês e não estão nas tuas despesas deste mês. Se ainda não saíram da conta, o que te sobra mesmo é {after}.',
+  subs_due_cta: 'Pôr na lista como por pagar',
+  subs_due_note: 'Se alguma já saiu da conta, marca-a como paga depois — ou apaga-a.',
+  subs_due_done: 'As subscrições já estão nas despesas deste mês.',
   // O saldo e o reservado já estão no cartão acima, com rótulo e tudo. Repeti-los
   // aqui em prosa punha os mesmos três números duas vezes seguidas no ecrã. O que
   // esta linha traz de novo são os dias que faltam — é só isso que fica.
@@ -846,6 +854,11 @@ const en: Record<DictKey, string> = {
   bal_unpaid: 'Unpaid',
   bal_confirm_title: 'Has any of these already left your account?',
   bal_confirm_sub: 'You logged these expenses but they are still unpaid. Tick the ones your bank has already debited — the balance you are typing already includes them.',
+  subs_due_title: 'Your subscriptions still have to be paid',
+  subs_due_sub: 'These {n} services cost {amount} a month and are not in this month’s expenses. If they have not left your account yet, what you really have left is {after}.',
+  subs_due_cta: 'Add them as unpaid',
+  subs_due_note: 'If one has already left your account, mark it as paid afterwards — or delete it.',
+  subs_due_done: 'Your subscriptions are already in this month’s expenses.',
   spend_frame_real: 'The {spendable} you have free, spread over the {days} days remaining:',
   spend_row_balance: 'Current balance',
   spend_row_spendable: 'Free to spend',

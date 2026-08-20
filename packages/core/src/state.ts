@@ -14,7 +14,7 @@ import type {
   Subscription,
 } from './types.js';
 import { currentLeak } from './leak.js';
-import { activeSubsTotal } from './subscriptions.js';
+import { activeSubsTotal, pendingSubs } from './subscriptions.js';
 import { computeOptiScore, type OptiScore } from './score.js';
 import { computeSafePace, type SafePace } from './pace.js';
 import { projectGoal } from './goals.js';
@@ -94,6 +94,11 @@ export interface FinancialState {
   currentBalance: number | null;
   /** O que desse saldo está livre depois do reservado para metas; null se não definido. */
   spendableNow: number | null;
+  /**
+   * Subscrições ativas que ainda não estão nas despesas registadas deste mês —
+   * dinheiro que o disponível ainda conta como livre mas já tem dono.
+   */
+  subsPending: { total: number; items: { name: string; price: number }[] };
   safePace: SafePace;
   score: OptiScore;
 }
@@ -209,6 +214,12 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
       ? null
       : Math.round((currentBalance - allocatedTotal - manual.unpaidExpenses) * 100) / 100;
 
+  //     As subscrições são despesas mensais iguais às outras, mas NÃO se
+  //     descontam aqui: a app não sabe o dia da cobrança e o saldo copiado do
+  //     banco pode já as excluir — descontar às cegas contava-as duas vezes.
+  //     Fica o valor à parte, para a app o mostrar e propor pô-las na lista.
+  const subsPending = pendingSubs(input.subs, input.manualEntries, input.planMonth);
+
   // 4. Safe pace
   const safePace = computeSafePace({
     income: input.income,
@@ -255,6 +266,7 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
     manualNet: manual.net,
     currentBalance,
     spendableNow,
+    subsPending,
     safePace,
     score,
   };

@@ -44,3 +44,49 @@ describe('subscription verdicts ripple through the whole state', () => {
     expect(s.score.breakdown[1]!.value).toBe(33);
   });
 });
+
+describe('subscrições por pagar no mês corrente', () => {
+  it('sem registos manuais, todas as ativas estão por pagar', () => {
+    const s = computeFinancialState(baselineInput());
+    expect(s.subsPending.total).toBeCloseTo(s.subsTotal, 2);
+    expect(s.subsPending.items).toHaveLength(8);
+  });
+
+  it('uma cancelada sai da conta', () => {
+    const s = computeFinancialState(withStatus('s4', 'cancelled'));
+    expect(s.subsPending.total).toBeCloseTo(77.34, 2);
+    expect(s.subsPending.items.map((i) => i.name)).not.toContain('Hbo Max');
+  });
+
+  it('registar a subscrição à mão tira-a da lista — não conta duas vezes', () => {
+    const s = computeFinancialState(
+      baselineInput({
+        manualEntries: [
+          { id: 'm1', month: '2026-06', type: 'expense', amount: 12.99, category: 'subscricoes', note: 'Netflix' },
+        ],
+      }),
+    );
+    expect(s.subsPending.items.map((i) => i.name)).not.toContain('Netflix');
+    expect(s.subsPending.total).toBeCloseTo(86.33 - 12.99, 2);
+  });
+
+  it('o registo de outro mês não conta — cada mês tem de ser pago de novo', () => {
+    const s = computeFinancialState(
+      baselineInput({
+        manualEntries: [
+          { id: 'm1', month: '2026-05', type: 'expense', amount: 12.99, category: 'subscricoes', note: 'Netflix' },
+        ],
+      }),
+    );
+    expect(s.subsPending.items.map((i) => i.name)).toContain('Netflix');
+  });
+
+  it('não desconta do disponível: quem decide é a lista de despesas', () => {
+    const base = baselineInput({ balance: { anchor: 1000, adjustedNet: 0 } });
+    const s = computeFinancialState(base);
+    expect(s.subsPending.total).toBeGreaterThan(0);
+    // O saldo disponível ignora-as de propósito — a app não sabe o dia da
+    // cobrança e o saldo do banco pode já as excluir.
+    expect(s.spendableNow).toBe(1000 - s.allocatedTotal);
+  });
+});

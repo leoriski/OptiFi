@@ -402,6 +402,9 @@ export function useFinance(): Finance {
       type: m.entry_type,
       amount: Number(m.amount),
       category: m.category,
+      // A nota é o que identifica a despesa ("Netflix"). Sem ela o motor não
+      // consegue ver que a subscrição já está registada e conta-a a dobrar.
+      note: m.note ?? undefined,
       viaMealCard: m.meal_card === true,
       paid: m.paid_at != null,
     }));

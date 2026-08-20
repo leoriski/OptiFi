@@ -73,6 +73,7 @@ export default function HomePage() {
   const [paidNow, setPaidNow] = useState<string[]>([]);
   const [mealInput, setMealInput] = useState('');
   const [editingMeal, setEditingMeal] = useState(false);
+  const [addingSubs, setAddingSubs] = useState(false);
 
   const hour = new Date().getHours();
   const greetKey: DictKey = hour < 12 ? 'greeting_morning' : hour < 20 ? 'greeting_afternoon' : 'greeting_evening';
@@ -152,6 +153,20 @@ export default function HomePage() {
   // delas que o saldo do banco pode não bater com o que a app mostra — daí a
   // pergunta antes de acertar.
   const unpaidRows = manual.filter((m) => m.entry_type === 'expense' && !m.meal_card && !m.paid_at);
+
+  // As subscrições saem da conta todos os meses, mas não estão nas despesas
+  // registadas — o "livre" conta-as como dinheiro disponível. A app não sabe o
+  // dia da cobrança, e o saldo copiado do banco pode já as excluir: descontar
+  // à força contava-as duas vezes. Mostra-se a conta e põe-se na lista a
+  // pedido, como despesas POR PAGAR — a partir daí é o `paid` que manda.
+  const subsDue = fs.subsPending;
+  const addSubsToList = async () => {
+    setAddingSubs(true);
+    for (const s of subsDue.items) {
+      await fin.addManual({ type: 'expense', amount: s.price, category: 'subscricoes', note: s.name, paid: false });
+    }
+    setAddingSubs(false);
+  };
 
   const saveBalance = async () => {
     const v = parseFloat(balanceInput.replace(',', '.'));
@@ -434,6 +449,63 @@ export default function HomePage() {
                 <div className="bv">{fmtEur(spendable)}</div>
               </div>
             </div>
+            {subsDue.total > 0 && (
+              <div
+                style={{
+                  marginBottom: 8,
+                  padding: '11px 12px',
+                  borderRadius: 'var(--rs)',
+                  background: 'color-mix(in srgb,var(--ye) 10%,transparent)',
+                  border: '1px solid color-mix(in srgb,var(--ye) 28%,transparent)',
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--tx)', marginBottom: 3 }}>{t('subs_due_title')}</div>
+                <div style={{ fontSize: 11, color: 'var(--tx2)', lineHeight: 1.5 }}>
+                  {fill(t('subs_due_sub'), {
+                    n: subsDue.items.length,
+                    amount: fmtEur(subsDue.total),
+                    after: fmtEur(Math.round((spendable - subsDue.total) * 100) / 100),
+                  })}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, margin: '8px 0' }}>
+                  {subsDue.items.map((s) => (
+                    <span
+                      key={s.name}
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: 'var(--tx2)',
+                        background: 'var(--card2)',
+                        border: '1px solid var(--b)',
+                        borderRadius: 20,
+                        padding: '3px 9px',
+                      }}
+                    >
+                      {s.name} · {fmtEur(s.price)}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={addSubsToList}
+                  disabled={addingSubs}
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    fontFamily: 'Manrope, sans-serif',
+                    color: '#fff',
+                    background: 'var(--tx)',
+                    border: 'none',
+                    borderRadius: 20,
+                    padding: '7px 14px',
+                    cursor: addingSubs ? 'default' : 'pointer',
+                    opacity: addingSubs ? 0.5 : 1,
+                  }}
+                >
+                  {t('subs_due_cta')}
+                </button>
+                <div style={{ fontSize: 10.5, color: 'var(--tx3)', lineHeight: 1.45, marginTop: 7 }}>{t('subs_due_note')}</div>
+              </div>
+            )}
           </>
         ) : manual.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--tx2)', marginBottom: 6, lineHeight: 1.5 }}>{fill(t('cf_empty_manual'), { month: currMonth })}</div>
