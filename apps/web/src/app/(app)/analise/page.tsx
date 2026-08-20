@@ -142,6 +142,8 @@ export default function InsightsPage() {
   }
 
   const catLabel = (id: string) => t(`cat_${id}` as DictKey);
+  /** O mês a que os números da análise pertencem — o do extrato, não o de hoje. */
+  const statementMonth = imp ? monthLabel(imp.statement_month, lang) : '';
 
   const insightText = (ins: Insight): string => {
     const p = ins.params;
@@ -163,7 +165,7 @@ export default function InsightsPage() {
     }
     if (ins.id === 'ins_subs_review') return fill(t('ins_subs_review_text'), { count: p.count!, total: fmtEur(Number(p.total)) });
     if (ins.id === 'ins_subs_ratio') return fill(t('ins_subs_ratio_text'), { total: fmtEur(Number(p.total)), pct: p.pct! });
-    if (ins.id === 'ins_rate_achievement') return fill(t('ins_ach_rate_text'), { pct: p.pct!, net: fmtEur(Number(p.net)) });
+    if (ins.id === 'ins_rate_achievement') return fill(t('ins_ach_rate_text'), { month: statementMonth, pct: p.pct!, net: fmtEur(Number(p.net)) });
     // Insights inteligentes (motor determinístico)
     if (ins.id.startsWith('sub_save_')) {
       const key = p.option === 'cheaper' ? 'ins_sub_cheaper' : 'ins_sub_share';
@@ -189,20 +191,23 @@ export default function InsightsPage() {
         saving: fmtEur(Number(p.saving)),
       });
     }
-    if (ins.id === 'small_purchases') return fill(t('ins_small_purchases'), { count: p.count!, total: fmtEur(Number(p.total)) });
-    if (ins.id === 'top_merchant') return fill(t('ins_top_merchant'), { name: p.name!, count: p.count!, total: fmtEur(Number(p.total)) });
+    if (ins.id === 'small_purchases') return fill(t('ins_small_purchases'), { month: statementMonth, count: p.count!, total: fmtEur(Number(p.total)) });
+    if (ins.id === 'top_merchant') return fill(t('ins_top_merchant'), { month: statementMonth, name: p.name!, count: p.count!, total: fmtEur(Number(p.total)) });
     if (ins.id === 'biggest_expense') return fill(t('ins_biggest_expense'), { desc: p.desc!, amount: fmtEur(Number(p.amount)), pct: p.pct! });
     if (ins.id === 'housing_share') return fill(t('ins_housing_share'), { pct: p.pct!, amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'rate_gap') return fill(t('ins_rate_gap'), { pct: p.pct!, gap: fmtEur(Number(p.gap)) });
     if (ins.id.startsWith('goal_boost_')) return fill(t('ins_goal_boost'), { name: p.name!, monthsLate: p.monthsLate!, needed: fmtEur(Number(p.needed)) });
     if (ins.id === 'leak_fv') return fill(t('ins_leak_fv'), { monthly: fmtEur(Number(p.monthly)), rate: p.rate!, fv10: fmtEur0(Number(p.fv10)), fv15: fmtEur0(Number(p.fv15)), fv20: fmtEur0(Number(p.fv20)) });
-    if (ins.id === 'daily_avg') return fill(t('ins_daily_avg'), { amount: fmtEur(Number(p.amount)), days: Number(p.days) });
+    if (ins.id === 'daily_avg') return fill(t('ins_daily_avg'), { month: statementMonth, amount: fmtEur(Number(p.amount)), days: Number(p.days) });
     if (ins.id === 'weekend_spend') return fill(t('ins_weekend_spend'), { pct: Number(p.pct), amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'cat_concentration') return fill(t('ins_cat_concentration'), { cat: catLabel(String(p.cat)), pct: Number(p.pct), amount: fmtEur(Number(p.amount)) });
-    if (ins.id === 'month_deficit') return fill(t('ins_month_deficit'), { amount: fmtEur(Number(p.amount)) });
-    if (ins.id === 'invest_capacity') return fill(t('ins_invest_capacity'), { amount: fmtEur(Number(p.amount)) });
+    // Estes dois saem do rendimento e das despesas do extrato importado, que é
+    // um mês fechado e não o mês em curso. Dizer "este mês" ou "{amount}/mês"
+    // transformava a sobra de um mês numa promessa mensal — nomeiam o mês.
+    if (ins.id === 'month_deficit') return fill(t('ins_month_deficit'), { month: statementMonth, amount: fmtEur(Number(p.amount)) });
+    if (ins.id === 'invest_capacity') return fill(t('ins_invest_capacity'), { month: statementMonth, amount: fmtEur(Number(p.amount)) });
     if (ins.id === 'renegotiate_two') return fill(t('ins_renegotiate'), { annual: fmtEur(Number(p.annual)), a: String(p.a), b: String(p.b) });
-    if (ins.id === 'goal_accelerate') return fill(t('ins_goal_accelerate'), { extra: fmtEur(Number(p.extra)), name: String(p.name), months: Number(p.months) });
+    if (ins.id === 'goal_accelerate') return fill(t('ins_goal_accelerate'), { month: statementMonth, extra: fmtEur(Number(p.extra)), name: String(p.name), months: Number(p.months) });
     return '';
   };
 
@@ -362,7 +367,7 @@ export default function InsightsPage() {
         </button>
       )}
       {smart.length === 0 && analysis.insights.length === 0 && (
-        <div className="card" style={{ fontSize: 12, color: 'var(--tx2)' }}>{t('ins_empty')}</div>
+        <div className="card" style={{ fontSize: 12, color: 'var(--tx2)' }}>{fill(t('ins_empty'), { month: statementMonth })}</div>
       )}
     </>
   );
