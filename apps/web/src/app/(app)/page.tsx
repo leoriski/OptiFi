@@ -176,13 +176,13 @@ export default function HomePage() {
     ? new Date(nextGoal.target_year, nextGoal.target_month - 1, 1).toLocaleDateString(lang === 'pt' ? 'pt-PT' : 'en-GB', { month: 'short', year: 'numeric' })
     : '';
 
-  const scenarioBox = (kind: 'now' | 'plan') => (
+  const scenarioBox = () => (
     <div
       style={{
         display: 'flex',
         gap: 8,
         alignItems: 'flex-start',
-        marginTop: kind === 'now' ? 13 : 8,
+        marginTop: 13,
         padding: '10px 12px',
         borderRadius: 'var(--rs)',
         background: 'var(--card2)',
@@ -190,12 +190,8 @@ export default function HomePage() {
     >
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--tx3)', flexShrink: 0, marginTop: 4 }} />
       <div>
-        <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--tx)', marginBottom: 2 }}>
-          {t(kind === 'now' ? 'spend_now_title' : 'spend_plan_title')}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.4 }}>
-          {fill(t(kind === 'now' ? 'spend_now_line' : 'spend_plan_line'), { amount: fmtEur(kind === 'now' ? nowW : planKeep) })}
-        </div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--tx)', marginBottom: 2 }}>{t('spend_plan_title')}</div>
+        <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.4 }}>{fill(t('spend_plan_line'), { amount: fmtEur(planKeep) })}</div>
       </div>
     </div>
   );
@@ -330,8 +326,9 @@ export default function HomePage() {
       {fs.leakTotal > 0 ? (
         <div className="money-leak-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            {/* Sem crachá do mês: a linha por baixo do número já diz de que mês
+                vêm as contas, e em português corrido em vez de um chip solto. */}
             <div className="leak-badge">{t('leak_badge')}</div>
-            <div className="leak-month-badge">{pastMonth}</div>
           </div>
           <div className="leak-value">{fmtEur0(fs.leakTotal)}/mês</div>
           <div style={{ fontSize: 11, color: 'var(--tx3)', marginBottom: 10 }}>{fill(t('leak_past'), { month: pastMonth })}</div>
@@ -503,8 +500,10 @@ export default function HomePage() {
               <span style={{ fontSize: 14, fontWeight: 800 }}>{t('pace_week')}</span>
             </div>
             <div style={{ fontSize: 13, color: 'var(--tx2)', marginTop: 1 }}>{fill(t('pace_day'), { amount: fmtEur(nowW / 7) })}</div>
-            {scenarioBox('now')}
-            {optSavings > 0.5 && scenarioBox('plan')}
+            {/* A caixa "Como estás agora" dizia o mesmo valor que o número grande
+                aqui em cima — era o cenário atual repetido em palavras. Fica só
+                a do plano, que é a única que traz um número novo. */}
+            {optSavings > 0.5 && scenarioBox()}
             {optSavings > 0.5 && (
               <button
                 onClick={() => setPlanOpen(true)}

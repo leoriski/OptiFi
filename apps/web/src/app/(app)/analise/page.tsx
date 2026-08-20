@@ -165,6 +165,7 @@ export default function InsightsPage() {
     }
     if (ins.id === 'ins_subs_review') return fill(t('ins_subs_review_text'), { count: p.count!, total: fmtEur(Number(p.total)) });
     if (ins.id === 'ins_subs_ratio') return fill(t('ins_subs_ratio_text'), { total: fmtEur(Number(p.total)), pct: p.pct! });
+    if (ins.id === 'ins_other_unknown') return fill(t('ins_other_unknown_text'), { count: Number(p.count), amount: fmtEur(Number(p.amount)), pct: p.pct! });
     if (ins.id === 'ins_rate_achievement') return fill(t('ins_ach_rate_text'), { month: statementMonth, pct: p.pct!, net: fmtEur(Number(p.net)) });
     // Insights inteligentes (motor determinístico)
     if (ins.id.startsWith('sub_save_')) {
@@ -225,6 +226,7 @@ export default function InsightsPage() {
     const byId: Record<string, DictKey> = {
       ins_subs_review: 'inst_subs_review',
       ins_subs_ratio: 'inst_subs_ratio',
+      ins_other_unknown: 'inst_other_unknown',
       ins_rate_achievement: 'inst_rate_achievement',
       small_purchases: 'inst_small_purchases',
       biggest_expense: 'inst_biggest_expense',
@@ -248,7 +250,10 @@ export default function InsightsPage() {
   // Anti-densidade: os cartões ESTRATÉGICOS (visão geral) vêm primeiro, seguidos
   // das poupanças concretas. Só os primeiros ficam à vista; o resto (observações
   // e conquistas) abre com "Ver mais" — a página não afoga quem chega.
-  const STRATEGIC = ['month_deficit', 'invest_capacity', 'renegotiate_two', 'goal_accelerate'];
+  // 'ins_other_unknown' vem à frente de tudo: enquanto uma fatia grande das
+  // despesas estiver por identificar, as contas mais abaixo assentam em dados
+  // incompletos. Dizê-lo depois de cinco sugestões seria dizê-lo tarde.
+  const STRATEGIC = ['ins_other_unknown', 'month_deficit', 'invest_capacity', 'renegotiate_two', 'goal_accelerate'];
   const allInsights = [...smart, ...analysis.insights.filter((i) => i.kind !== 'leak')];
   const orderedInsights = [
     ...STRATEGIC.map((id) => allInsights.find((i) => i.id === id)).filter((i): i is Insight => !!i),

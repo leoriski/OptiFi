@@ -13,12 +13,19 @@ import { inferKind, prettyMerchant, type ServiceKind } from './catalog.js';
  * Tetos recomendados por categoria, como fração do rendimento do mês.
  * Gastar acima disto gera um item de fuga com a poupança correspondente.
  * habitacao/saude/receita nunca geram fugas; subscricoes têm pilar próprio.
+ *
+ * 'outros' está deliberadamente fora: é a categoria dos movimentos que não
+ * conseguimos identificar (levantamentos ATM, transferências para pessoas,
+ * comerciantes desconhecidos). Tinha teto de 8% e chegava a valer a maior
+ * parte do "podes poupar" — mas dizer a alguém que pode cortar €420/mês numa
+ * categoria cujo nome significa "não sei o que isto foi" não é acionável:
+ * não há nada para cancelar nem para deixar de comprar. Continua a contar
+ * como despesa e gera um alerta próprio (ver OTHER_ALERT_RATIO).
  */
 export const CATEGORY_CAPS: Record<string, number> = {
   alimentacao: 0.2,
   lazer: 0.06,
   transporte: 0.12,
-  outros: 0.08,
 };
 
 /** Poupança mínima para valer a pena sugerir (evita itens de €1). */
@@ -33,13 +40,15 @@ const FREQUENCY_MIN: Record<string, number> = {
   transporte: 4, // boleias (Uber/Bolt/Lime) somam depressa
   lazer: 3,
   alimentacao: 6, // refeições/compras frequentes fora
-  outros: 6,
 };
 /** Fração da categoria assumida como reduzível quando há gasto repetido. */
 const FREQUENCY_CUT = 0.3;
 
 /** Rácio de subscrições/rendimento acima do qual alertamos. */
 const SUBS_ALERT_RATIO = 0.06;
+
+/** Peso de 'outros' nas despesas a partir do qual pedimos para categorizar. */
+const OTHER_ALERT_RATIO = 0.15;
 
 export interface LeakPlanItem extends PlanItem {
   /**
@@ -264,6 +273,24 @@ export function generateAnalysis(input: AnalysisInput): Analysis {
       params: { count: unknown, total: round2(subsTotal) },
     });
   }
+  // 2b. 'outros' pesado não é uma poupança prometida, é uma lacuna de dados:
+  //     o que há a fazer não é "gastar menos em Outros" (não existe tal loja),
+  //     é ir à Atividade dizer o que aqueles movimentos foram. Só depois disso
+  //     é que o gasto pode aparecer numa categoria com teto e virar fuga real.
+  const other = categorySpend.find((r) => r.categoryId === 'outros');
+  if (other && expenses > 0 && other.amount / expenses >= OTHER_ALERT_RATIO) {
+    insights.push({
+      id: 'ins_other_unknown',
+      kind: 'alert',
+      saving: 0,
+      params: {
+        amount: round2(other.amount),
+        pct: Math.round((other.amount / expenses) * 100),
+        count: other.count ?? 0,
+      },
+    });
+  }
+
   if (income > 0 && subsTotal / income > SUBS_ALERT_RATIO) {
     insights.push({
       id: 'ins_subs_ratio',
