@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { categorizeStatement, groupSubscriptions } from '@optifi/ingest';
+import { categorizeStatement, groupSubscriptions, summariseTotals } from '@optifi/ingest';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rateLimit';
+import { applyCategoryRules, toRuleMap } from '@/lib/server/categoryRules';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +34,13 @@ export async function POST() {
   if (impErr) return NextResponse.json({ error: 'db_error' }, { status: 500 });
   if (!imports || imports.length === 0) return NextResponse.json({ ok: true, changed: 0, imports: 0 });
 
+  // As correções do utilizador entram DEPOIS do categorizador automático e
+  // ganham-lhe. Sem isto, esta rota — cuja função é precisamente reescrever a
+  // coluna `category` — apagava em silêncio todo o trabalho de arrumação que
+  // ele tivesse feito na Atividade.
+  const { data: ruleRows } = await supabase.from('category_rules').select('merchant,category').eq('user_id', user.id);
+  const rules = toRuleMap(ruleRows);
+
   let changed = 0;
 
   for (const imp of imports) {
@@ -44,8 +52,11 @@ export async function POST() {
     if (txErr) return NextResponse.json({ error: 'db_error' }, { status: 500 });
     if (!rows || rows.length === 0) continue;
 
-    const recategorized = categorizeStatement(
-      rows.map((r) => ({ id: r.id, date: r.tx_date, description: r.description, amount: Number(r.amount), type: r.tx_type, was: r.category })),
+    const recategorized = applyCategoryRules(
+      categorizeStatement(
+        rows.map((r) => ({ id: r.id, date: r.tx_date, description: r.description, amount: Number(r.amount), type: r.tx_type, was: r.category })),
+      ),
+      rules,
     );
 
     for (const tx of recategorized) {
@@ -56,20 +67,10 @@ export async function POST() {
     }
 
     // Os totais do mês derivam das categorias: transferências ficam de fora.
-    let income = 0;
-    let expenses = 0;
-    let housingFixed = 0;
-    for (const tx of recategorized) {
-      if (tx.category === 'transferencias') continue;
-      if (tx.type === 'income') income += tx.amount;
-      else {
-        expenses += tx.amount;
-        if (tx.category === 'habitacao') housingFixed += tx.amount;
-      }
-    }
+    const totals = summariseTotals(recategorized);
     const { error: updErr } = await supabase
       .from('imports')
-      .update({ income: round2(income), expenses: round2(expenses), housing_fixed: round2(housingFixed) })
+      .update({ income: totals.income, expenses: totals.expenses, housing_fixed: totals.housingFixed })
       .eq('id', imp.id);
     if (updErr) return NextResponse.json({ error: 'db_error' }, { status: 500 });
 
@@ -99,8 +100,4 @@ export async function POST() {
   }
 
   return NextResponse.json({ ok: true, imports: imports.length, changed });
-}
-
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
 }

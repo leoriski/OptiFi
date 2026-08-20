@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { buildStatement, ingestStatement, parsePdfStatementLines, pdfContentStart, IngestError, type BankId, type ColumnMapping } from '@optifi/ingest';
+import { buildStatement, ingestStatement, parsePdfStatementLines, pdfContentStart, summariseTotals, IngestError, type BankId, type ColumnMapping } from '@optifi/ingest';
 import { createClient } from '@/lib/supabase/server';
 import { extractPdfLines } from '@/lib/pdfText';
 import { rateLimit } from '@/lib/rateLimit';
+import { applyCategoryRules, toRuleMap } from '@/lib/server/categoryRules';
 
 export const runtime = 'nodejs';
 
@@ -89,7 +90,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'parse_failed' }, { status: 422 });
   }
 
-  const { summary, bank } = result;
+  const { bank } = result;
+
+  // Correções que o utilizador já fez a estes comerciantes. Uma reimportação
+  // cria linhas NOVAS (fingerprint novo, import novo), por isso sem as regras
+  // o trabalho de arrumação do mês anterior desaparecia sempre que ele
+  // voltasse a carregar o extrato — que é exatamente o que vai ter de fazer
+  // para corrigir as datas. Os totais são refeitos a seguir porque as
+  // categorias mudaram: uma transferência sai das despesas.
+  const { data: ruleRows } = await supabase.from('category_rules').select('merchant,category').eq('user_id', user.id);
+  const transactions = applyCategoryRules(result.summary.transactions, toRuleMap(ruleRows));
+  const summary = { ...result.summary, transactions, ...summariseTotals(transactions) };
 
   // Preserva veredictos dados a subscrições com o mesmo nome (reimportação
   // não pode apagar decisões do utilizador).

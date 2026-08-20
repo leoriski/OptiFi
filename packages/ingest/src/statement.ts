@@ -120,13 +120,35 @@ export function buildStatement(txs: ParsedTransaction[], endingBalance?: number)
   const withFp = assignFingerprints(monthTxs);
   const transactions: CategorizedTransaction[] = categorizeStatement(withFp);
 
-  // Transferências entre pessoas (dinheiro que apenas circula) NÃO são nem
-  // rendimento nem consumo — ficam fora dos totais que alimentam a análise
-  // (défice, taxa de poupança, regra). Aparecem à parte na Atividade.
+  const subscriptions = groupSubscriptions(transactions);
+
+  return {
+    statementMonth,
+    transactions,
+    ...summariseTotals(transactions),
+    subscriptions,
+    ...(endingBalance !== undefined ? { endingBalance: round2(endingBalance) } : {}),
+  };
+}
+
+/**
+ * Agregados do mês a partir das categorias. Vive aqui porque as categorias
+ * mudam depois da importação — quando o utilizador corrige um comerciante e
+ * quando o motor é reanalisado — e os totais têm de ser refeitos exatamente da
+ * mesma maneira nos três sítios. Estava copiado à mão em dois deles.
+ *
+ * Transferências entre pessoas (dinheiro que apenas circula) NÃO são nem
+ * rendimento nem consumo — ficam fora dos totais que alimentam a análise
+ * (défice, taxa de poupança, regra). Aparecem à parte na Atividade. É por isto
+ * que recategorizar um movimento como transferência muda o mês inteiro.
+ */
+export function summariseTotals(
+  txs: { type: 'income' | 'expense'; amount: number; category: CategoryKey }[],
+): { income: number; expenses: number; housingFixed: number } {
   let income = 0;
   let expenses = 0;
   let housingFixed = 0;
-  for (const tx of transactions) {
+  for (const tx of txs) {
     if (tx.category === 'transferencias') continue;
     if (tx.type === 'income') income += tx.amount;
     else {
@@ -134,18 +156,7 @@ export function buildStatement(txs: ParsedTransaction[], endingBalance?: number)
       if (tx.category === 'habitacao') housingFixed += tx.amount;
     }
   }
-
-  const subscriptions = groupSubscriptions(transactions);
-
-  return {
-    statementMonth,
-    transactions,
-    income: round2(income),
-    expenses: round2(expenses),
-    housingFixed: round2(housingFixed),
-    subscriptions,
-    ...(endingBalance !== undefined ? { endingBalance: round2(endingBalance) } : {}),
-  };
+  return { income: round2(income), expenses: round2(expenses), housingFixed: round2(housingFixed) };
 }
 
 function round2(n: number): number {

@@ -117,6 +117,9 @@ export default function ActivityPage() {
   const [error, setError] = useState<DictKey | ''>('');
   const [tab, setTab] = useState<'mov' | 'subs'>('mov');
   const [filter, setFilter] = useState<'all' | CategoryKey>('all');
+  // Comerciante com o seletor de categoria aberto (o nome mostrado, não o id
+  // da linha: a regra é por comerciante).
+  const [catFor, setCatFor] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const pendingFile = useRef<File | null>(null);
 
@@ -428,6 +431,15 @@ export default function ActivityPage() {
   const currMonth = monthLabel(planMonth, lang);
   const presentCats = FILTER_ORDER.filter((c) => txs.some((tx) => tx.category === c));
   const filteredTxs = filter === 'all' ? txs : txs.filter((tx) => tx.category === filter);
+  // Quantas linhas cada comerciante tem: é o que a app promete arrumar de uma
+  // vez quando o utilizador escolhe a categoria, e dizer o número evita a
+  // surpresa de ver duas linhas mudarem depois de tocar numa.
+  const merchantCount = new Map<string, number>();
+  for (const tx of txs) {
+    const k = prettyMerchant(tx.description);
+    merchantCount.set(k, (merchantCount.get(k) ?? 0) + 1);
+  }
+  const unknownCount = txs.filter((tx) => tx.category === 'outros').length;
   const activeSubs = subs.filter((s) => s.user_status !== 'cancelled');
   const subsTotal = activeSubs.reduce((a, b) => a + Number(b.price), 0);
 
@@ -690,9 +702,16 @@ export default function ActivityPage() {
               </button>
             ))}
           </div>
+          {unknownCount > 0 && (
+            <div style={{ fontSize: 11.5, color: 'var(--tx2)', margin: '0 2px 8px', lineHeight: 1.5 }}>
+              {fill(t('act_categorize_hint'), { count: unknownCount })}
+            </div>
+          )}
           <div className="card">
             {filteredTxs.map((tx, i) => {
               const showDate = i === 0 || filteredTxs[i - 1]!.tx_date !== tx.tx_date;
+              const merchant = prettyMerchant(tx.description);
+              const open = catFor === merchant;
               return (
                 <div key={`${tx.tx_date}-${i}`}>
                   {showDate && (
@@ -700,10 +719,26 @@ export default function ActivityPage() {
                       {new Date(tx.tx_date + 'T00:00:00').toLocaleDateString(lang === 'pt' ? 'pt-PT' : 'en-GB', { day: 'numeric', month: 'short' }).replace('.', '').toUpperCase()}
                     </div>
                   )}
-                  <div className="tx-item">
+                  {/* Tocar num movimento corrige a categoria. A correção vale
+                      para o COMERCIANTE, não para a linha: o mesmo sítio chega
+                      do banco com descritivos diferentes e voltaria a aparecer
+                      por identificar no mês seguinte. */}
+                  <div
+                    className="tx-item"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setCatFor(open ? null : merchant)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setCatFor(open ? null : merchant);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <CatChip category={tx.category} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="tx-name">{prettyMerchant(tx.description)}</div>
+                      <div className="tx-name">{merchant}</div>
                       <div className="tx-cat">{t(`cat_${tx.category}` as DictKey)}</div>
                     </div>
                     <div className={`tx-amt${tx.tx_type === 'income' ? ' tx-amt-pos' : ' tx-amt-neg'}`}>
@@ -711,6 +746,29 @@ export default function ActivityPage() {
                       {fmtEur(Number(tx.amount))}
                     </div>
                   </div>
+                  {open && (
+                    <div style={{ padding: '2px 2px 12px' }}>
+                      <div style={{ fontSize: 11, color: 'var(--tx2)', marginBottom: 7, lineHeight: 1.5 }}>
+                        {fill(t('act_cat_scope'), { merchant, n: merchantCount.get(merchant) ?? 1 })}
+                      </div>
+                      <div className="cat-pills" style={{ marginBottom: 0 }}>
+                        {MANUAL_CATS.map((c) => (
+                          <button
+                            key={c}
+                            className={`cat-pill${tx.category === c ? ' on' : ''}`}
+                            onClick={() => {
+                              setCatFor(null);
+                              void fin.setTxCategory(merchant, c);
+                            }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                          >
+                            <CategoryIcon category={c} size={12} color={tx.category === c ? 'var(--bg)' : 'var(--tx2)'} />
+                            {t(`cat_${c}` as DictKey)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -21,7 +21,9 @@ export async function GET() {
     'subscriptions',
     'goals',
     'goal_withdrawals',
+    'goal_monthly_allocations',
     'category_limits',
+    'category_rules',
     'manual_entries',
     'plan_items',
   ] as const;

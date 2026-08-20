@@ -152,6 +152,8 @@ export interface Finance {
   /** Marca uma despesa como já saída da conta (ou volta a pô-la por pagar). */
   setManualPaid: (id: string, paid: boolean) => Promise<void>;
   removeManual: (id: string) => Promise<void>;
+  /** Regra "este comerciante é desta categoria"; `merchant` é o nome mostrado. */
+  setTxCategory: (merchant: string, category: CategoryKey) => Promise<void>;
 }
 
 /**
@@ -760,6 +762,28 @@ export function useFinance(): Finance {
     [reload],
   );
 
+  /**
+   * "Isto que aparece como X é da categoria Y." Vai à rota em vez de escrever
+   * direto na tabela porque a decisão não é só a linha que está no ecrã: cria
+   * a regra que sobrevive ao Re-analisar, arruma as outras linhas do mesmo
+   * comerciante e refaz os totais do mês. Meio disto feito seria pior do que
+   * nada — a análise passaria a assentar em números que já não batem com as
+   * categorias.
+   */
+  const setTxCategory = useCallback(
+    async (merchant: string, category: CategoryKey) => {
+      if (isDemoActive()) return;
+      const res = await fetch('/api/categorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchant, category }),
+      });
+      if (!res.ok) return;
+      await reload();
+    },
+    [reload],
+  );
+
   return {
     loading,
     imported: imp !== null,
@@ -800,5 +824,6 @@ export function useFinance(): Finance {
     addManual,
     setManualPaid,
     removeManual,
+    setTxCategory,
   };
 }
