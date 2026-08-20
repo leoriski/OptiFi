@@ -86,6 +86,8 @@ export interface FinancialState {
   mealCard: { monthly: number; spent: number; left: number } | null;
   limitsCount: number;
   manualExpensesThisMonth: number;
+  /** Das despesas do mês, as que ainda não saíram da conta. */
+  unpaidExpensesThisMonth: number;
   manualIncomeThisMonth: number;
   manualNet: number;
   /** Saldo atual estimado (âncora + registos posteriores); null se não definido. */
@@ -186,14 +188,26 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
   //  mês ANALISADO (o que gastaste), não contra o progresso corrente.
   const limitsPotential = computeLimits(input.categoryLimits, input.categorySpend).savingsPotential;
 
-  // 3e. Saldo real: âncora definida pelo utilizador + movimentos registados
-  //     depois dela. É A ponte entre o mês fechado analisado e o presente —
-  //     tudo o que mexe no dinheiro de agora passa por aqui.
+  // 3e. Saldo real e disponível — duas perguntas diferentes, duas contas.
+  //
+  //     O saldo é o que está NA CONTA: a âncora que o utilizador copiou do banco
+  //     mais os movimentos registados depois dela que já mexeram mesmo no
+  //     dinheiro (`adjustedNet` só soma receitas e despesas marcadas como pagas).
+  //     Uma despesa registada com antecedência não baixa o saldo — o dinheiro
+  //     ainda lá está.
+  //
+  //     O disponível é o que desse saldo é MESMO teu para gastar: tira o que
+  //     está reservado para metas e o que está por pagar. É por aqui que a
+  //     renda do dia 25 deixa de aparecer como dinheiro livre no dia 10.
+  //
+  //     Assinado, NÃO limitado a 0: se o que deves passa o que tens, o número
+  //     fica negativo e a UI mostra-o em vermelho — a verdade vem com sinal.
   const currentBalance =
     input.balance != null ? Math.round((input.balance.anchor + input.balance.adjustedNet) * 100) / 100 : null;
-  // Assinado, NÃO limitado a 0: se reservaste mais do que tens, o gastável é
-  // negativo e a UI mostra-o em vermelho — a verdade vem sempre com sinal.
-  const spendableNow = currentBalance === null ? null : Math.round((currentBalance - allocatedTotal) * 100) / 100;
+  const spendableNow =
+    currentBalance === null
+      ? null
+      : Math.round((currentBalance - allocatedTotal - manual.unpaidExpenses) * 100) / 100;
 
   // 4. Safe pace
   const safePace = computeSafePace({
@@ -236,6 +250,7 @@ export function computeFinancialState(input: FinancialInput): FinancialState {
     manualCategorySpend: currentCatSpend,
     mealCard,
     manualExpensesThisMonth: manual.expenses,
+    unpaidExpensesThisMonth: manual.unpaidExpenses,
     manualIncomeThisMonth: manual.income,
     manualNet: manual.net,
     currentBalance,

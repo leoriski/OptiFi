@@ -103,6 +103,14 @@ export interface ManualEntry {
    * do cartão (recebido − gasto = restante).
    */
   viaMealCard?: boolean;
+  /**
+   * A despesa JÁ saiu da conta. Ausente/false = está registada mas ainda por
+   * pagar — o gesto normal é registar o que há a pagar logo a seguir a receber
+   * o salário, e nessa altura o dinheiro ainda lá está. Uma despesa por pagar
+   * não baixa o saldo, baixa o que podes gastar; ao marcá-la como paga o valor
+   * passa de um lado para o outro e o disponível não se mexe.
+   */
+  paid?: boolean;
 }
 
 /** Spend per limit-able category in the analyzed (imported) month. */

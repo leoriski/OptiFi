@@ -328,6 +328,11 @@ const pt = {
   bal_set_cta: 'Guardar saldo',
   bal_edit: 'Ajustar saldo',
   bal_placeholder: 'Saldo na conta (€)',
+  // Despesas já registadas que ainda não saíram da conta: o dinheiro está lá,
+  // mas já tem dono. É o que separa o saldo do que é mesmo teu para gastar.
+  bal_unpaid: 'Por pagar',
+  bal_confirm_title: 'Alguma destas já saiu da conta?',
+  bal_confirm_sub: 'Tens estas despesas apontadas mas ainda por pagar. Marca as que o banco já debitou — o saldo que estás a escrever já as inclui.',
   // O saldo e o reservado já estão no cartão acima, com rótulo e tudo. Repeti-los
   // aqui em prosa punha os mesmos três números duas vezes seguidas no ecrã. O que
   // esta linha traz de novo são os dias que faltam — é só isso que fica.
@@ -432,6 +437,9 @@ const pt = {
   meal_card_note: 'Diz-nos quanto recebes por mês no cartão refeição. Depois, ao registares uma despesa, marca "Paguei com o cartão refeição" — assim vês sempre quanto ainda tens no cartão para as refeições. Este dinheiro fica à parte do saldo da conta.',
   meal_card_active: '{amount}/mês',
   manual_meal_toggle: 'Paguei com o cartão refeição',
+  manual_paid_toggle: 'Esta já saiu da conta',
+  manual_paid_badge: 'Paga',
+  manual_unpaid_badge: 'Por pagar',
   meal_home_lbl: 'CARTÃO REFEIÇÃO',
   meal_home_in: 'Recebes',
   meal_home_spent: 'Gastaste',
@@ -831,6 +839,9 @@ const en: Record<DictKey, string> = {
   bal_set_cta: 'Save balance',
   bal_edit: 'Adjust balance',
   bal_placeholder: 'Account balance (€)',
+  bal_unpaid: 'Unpaid',
+  bal_confirm_title: 'Has any of these already left your account?',
+  bal_confirm_sub: 'You logged these expenses but they are still unpaid. Tick the ones your bank has already debited — the balance you are typing already includes them.',
   spend_frame_real: 'The {spendable} you have free, spread over the {days} days remaining:',
   spend_row_balance: 'Current balance',
   spend_row_spendable: 'Free to spend',
@@ -925,6 +936,9 @@ const en: Record<DictKey, string> = {
   meal_card_note: 'Tell us how much you receive per month on your meal card. Then, when logging an expense, tick "Paid with meal card" — you always see how much is left for meals. This money is separate from your bank balance.',
   meal_card_active: '{amount}/month',
   manual_meal_toggle: 'Paid with meal card',
+  manual_paid_toggle: 'This already left my account',
+  manual_paid_badge: 'Paid',
+  manual_unpaid_badge: 'Unpaid',
   meal_home_lbl: 'MEAL CARD',
   meal_home_in: 'You receive',
   meal_home_spent: 'Spent',

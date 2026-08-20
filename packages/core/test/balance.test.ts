@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeFinancialState } from '../src/index.js';
-import { baselineInput } from './fixtures/baseline.js';
+import { baselineInput, PROTOTYPE_PLAN_MONTH } from './fixtures/baseline.js';
 
 describe('saldo real ligado a tudo (âncora + registos)', () => {
   it('sem âncora definida, o saldo é null (nunca inventado)', () => {
@@ -78,5 +78,76 @@ describe('saldo real ligado a tudo (âncora + registos)', () => {
     const before = computeFinancialState(baselineInput({ balance: { anchor: 1000, adjustedNet: 0 } }));
     const after = computeFinancialState(baselineInput({ balance: { anchor: 1000, adjustedNet: -38.5 } }));
     expect(before.currentBalance! - after.currentBalance!).toBeCloseTo(38.5, 2);
+  });
+});
+
+// O gesto real: recebe-se o salário e regista-se logo tudo o que há a pagar,
+// para saber com quanto se fica. Enquanto essas despesas não saem da conta, o
+// saldo tem de continuar a mostrá-las — o que não pode é o dinheiro aparecer
+// como disponível para gastar.
+describe('despesas por pagar: baixam o disponível, não o saldo', () => {
+  const bill = (id: string, amount: number, paid: boolean) => ({
+    id,
+    month: PROTOTYPE_PLAN_MONTH,
+    type: 'expense' as const,
+    amount,
+    paid,
+  });
+
+  it('uma despesa por pagar sai do disponível e deixa o saldo intacto', () => {
+    const s = computeFinancialState(
+      baselineInput({
+        balance: { anchor: 1000, adjustedNet: 0 },
+        manualEntries: [bill('m1', 500, false)],
+      }),
+    );
+    expect(s.currentBalance).toBe(1000); // o dinheiro ainda está na conta
+    expect(s.unpaidExpensesThisMonth).toBe(500);
+    expect(s.spendableNow).toBe(500); // mas já tem dono
+  });
+
+  it('marcar como paga move o valor de um lado para o outro: o disponível não muda', () => {
+    const unpaid = computeFinancialState(
+      baselineInput({ balance: { anchor: 1000, adjustedNet: 0 }, manualEntries: [bill('m1', 500, false)] }),
+    );
+    // Ao pagar, o banco debita: a âncora do saldo passa a refletir a saída
+    // (adjustedNet −500) e a despesa deixa de estar por pagar.
+    const paid = computeFinancialState(
+      baselineInput({ balance: { anchor: 1000, adjustedNet: -500 }, manualEntries: [bill('m1', 500, true)] }),
+    );
+    expect(paid.currentBalance).toBe(500);
+    expect(paid.unpaidExpensesThisMonth).toBe(0);
+    expect(paid.spendableNow).toBe(unpaid.spendableNow); // 500 nos dois casos
+  });
+
+  it('reservado para metas e por pagar somam-se no disponível, sem se atropelarem', () => {
+    const input = baselineInput({
+      balance: { anchor: 1000, adjustedNet: 0 },
+      manualEntries: [bill('m1', 500, false), bill('m2', 62, false), bill('m3', 150, true)],
+    });
+    input.goals.find((g) => g.id === 'g1')!.monthlyAllocation = 150;
+    const s = computeFinancialState(input);
+    expect(s.unpaidExpensesThisMonth).toBe(562); // a paga fica de fora
+    expect(s.spendableNow).toBe(288); // 1000 − 150 reservados − 562 por pagar
+  });
+
+  it('despesa do cartão refeição nunca entra no por pagar — não sai da conta', () => {
+    const s = computeFinancialState(
+      baselineInput({
+        balance: { anchor: 1000, adjustedNet: 0 },
+        mealCardMonthly: 200,
+        manualEntries: [{ id: 'm1', month: PROTOTYPE_PLAN_MONTH, type: 'expense', amount: 40, viaMealCard: true }],
+      }),
+    );
+    expect(s.unpaidExpensesThisMonth).toBe(0);
+    expect(s.spendableNow).toBe(1000);
+  });
+
+  it('dever mais do que se tem deixa o disponível negativo, sem esconder nada', () => {
+    const s = computeFinancialState(
+      baselineInput({ balance: { anchor: 300, adjustedNet: 0 }, manualEntries: [bill('m1', 500, false)] }),
+    );
+    expect(s.currentBalance).toBe(300);
+    expect(s.spendableNow).toBe(-200);
   });
 });

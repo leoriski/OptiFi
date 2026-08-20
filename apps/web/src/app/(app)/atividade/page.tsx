@@ -47,6 +47,50 @@ const linkBtn: React.CSSProperties = {
 const FILTER_ORDER: CategoryKey[] =['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
 const MANUAL_CATS: CategoryKey[] = ['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'outros'];
 
+/** Caixa de seleção larga usada nas opções do registo manual. */
+function CheckRow({ on, label, right, onToggle }: { on: boolean; label: string; right?: React.ReactNode; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        width: '100%',
+        padding: '10px 12px',
+        marginBottom: 10,
+        borderRadius: 'var(--rs)',
+        border: on ? '1px solid var(--tx)' : '1px solid var(--b)',
+        background: 'var(--card2)',
+        cursor: 'pointer',
+        fontFamily: 'Manrope, sans-serif',
+        textAlign: 'left',
+      }}
+    >
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 5,
+          border: on ? 'none' : '1.5px solid var(--tx3)',
+          background: on ? 'var(--tx)' : 'transparent',
+          color: 'var(--bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          fontWeight: 900,
+          flexShrink: 0,
+        }}
+      >
+        {on ? '✓' : ''}
+      </span>
+      <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{label}</span>
+      {right}
+    </button>
+  );
+}
+
 function CatChip({ category }: { category: string }) {
   const color = CATEGORY_COLOR[category] ?? CATEGORY_COLOR.outros!;
   return (
@@ -87,6 +131,9 @@ export default function ActivityPage() {
   const [mCat, setMCat] = useState<CategoryKey>('outros');
   const [mNote, setMNote] = useState('');
   const [mMealCard, setMMealCard] = useState(false);
+  // Por omissão a despesa fica POR PAGAR: o gesto normal é receber o salário e
+  // apontar o que há a pagar. Quem regista algo já pago liga este toggle.
+  const [mPaid, setMPaid] = useState(false);
 
   // Subscrição manual
   const [showSubForm, setShowSubForm] = useState(false);
@@ -150,10 +197,11 @@ export default function ActivityPage() {
   async function addManualEntry() {
     const amount = parseFloat(mAmount.replace(',', '.'));
     if (!(amount > 0)) return;
-    await fin.addManual({ type: mType, amount, category: mType === 'income' ? 'receita' : mCat, note: mNote, mealCard: mType === 'expense' && mMealCard });
+    await fin.addManual({ type: mType, amount, category: mType === 'income' ? 'receita' : mCat, note: mNote, mealCard: mType === 'expense' && mMealCard, paid: mPaid });
     setMAmount('');
     setMNote('');
     setMMealCard(false);
+    setMPaid(false);
     setShowManualForm(false);
   }
 
@@ -497,51 +545,27 @@ export default function ActivityPage() {
               </div>
               <input className="auth-input" placeholder={t('manual_note')} value={mNote} onChange={(e) => setMNote(e.target.value)} style={{ marginBottom: 10 }} />
               {mType === 'expense' && fin.mealCard > 0 && (
-                <button
-                  onClick={() => setMMealCard(!mMealCard)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 9,
-                    width: '100%',
-                    padding: '10px 12px',
-                    marginBottom: 10,
-                    borderRadius: 'var(--rs)',
-                    border: mMealCard ? '1px solid var(--tx)' : '1px solid var(--b)',
-                    background: 'var(--card2)',
-                    cursor: 'pointer',
-                    fontFamily: 'Manrope, sans-serif',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 5,
-                      border: mMealCard ? 'none' : '1.5px solid var(--tx3)',
-                      background: mMealCard ? 'var(--tx)' : 'transparent',
-                      color: 'var(--bg)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 900,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {mMealCard ? '✓' : ''}
-                  </span>
-                  <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{t('manual_meal_toggle')}</span>
-                  {/* Quanto ainda resta no cartão, aqui mesmo: é neste momento
-                      que a pergunta se faz, e ver o número mexer é o que faz
-                      valer a pena registar da próxima vez. */}
-                  {fin.fs?.mealCard && (
-                    <span style={{ fontSize: 12, fontWeight: 800, flexShrink: 0, color: fin.fs.mealCard.left < 0 ? 'var(--re)' : 'var(--tx2)' }}>
-                      {t('meal_home_left')} {fmtEur(fin.fs.mealCard.left)}
-                    </span>
-                  )}
-                </button>
+                <CheckRow
+                  on={mMealCard}
+                  onToggle={() => setMMealCard(!mMealCard)}
+                  label={t('manual_meal_toggle')}
+                  /* Quanto ainda resta no cartão, aqui mesmo: é neste momento
+                     que a pergunta se faz, e ver o número mexer é o que faz
+                     valer a pena registar da próxima vez. */
+                  right={
+                    fin.fs?.mealCard ? (
+                      <span style={{ fontSize: 12, fontWeight: 800, flexShrink: 0, color: fin.fs.mealCard.left < 0 ? 'var(--re)' : 'var(--tx2)' }}>
+                        {t('meal_home_left')} {fmtEur(fin.fs.mealCard.left)}
+                      </span>
+                    ) : undefined
+                  }
+                />
+              )}
+              {/* Uma despesa do cartão refeição sai na hora — não há estado por
+                  pagar para perguntar. Nas outras, a app não pode adivinhar: só
+                  o utilizador sabe se o dinheiro já saiu da conta. */}
+              {mType === 'expense' && !mMealCard && (
+                <CheckRow on={mPaid} onToggle={() => setMPaid(!mPaid)} label={t('manual_paid_toggle')} />
               )}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-primary" style={{ flex: 1, padding: 11, fontSize: 12 }} onClick={() => void addManualEntry()}>
@@ -613,6 +637,28 @@ export default function ActivityPage() {
                         {t(`cat_${m.category}` as DictKey)}
                         {m.meal_card && <span style={{ color: 'var(--tx3)' }}> · {t('meal_card_title')}</span>}
                       </div>
+                      {/* O estado por pagar muda-se aqui, num toque, sem abrir
+                          nada: é a mesma linha onde se vê a despesa. Só para
+                          despesas da conta — as do cartão já saíram. */}
+                      {m.entry_type === 'expense' && !m.meal_card && (
+                        <button
+                          onClick={() => void fin.setManualPaid(m.id, !m.paid_at)}
+                          style={{
+                            marginTop: 3,
+                            padding: '2px 8px',
+                            borderRadius: 20,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            fontFamily: 'Manrope, sans-serif',
+                            border: `1px solid color-mix(in srgb, ${m.paid_at ? 'var(--gr)' : 'var(--ye)'} 30%, transparent)`,
+                            background: `color-mix(in srgb, ${m.paid_at ? 'var(--gr)' : 'var(--ye)'} 12%, transparent)`,
+                            color: m.paid_at ? 'var(--gr)' : 'var(--ye)',
+                          }}
+                        >
+                          {m.paid_at ? t('manual_paid_badge') : t('manual_unpaid_badge')}
+                        </button>
+                      )}
                     </div>
                     <div className={`tx-amt${m.entry_type === 'income' ? ' tx-amt-pos' : ''}`}>
                       {m.entry_type === 'income' ? '+' : '−'}

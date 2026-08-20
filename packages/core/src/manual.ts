@@ -9,6 +9,8 @@ export interface ManualSums {
   expenses: number;
   income: number;
   net: number;
+  /** Das despesas acima, as que ainda não saíram da conta. */
+  unpaidExpenses: number;
 }
 
 /**
@@ -18,6 +20,7 @@ export interface ManualSums {
 export function sumManualEntries(entries: ManualEntry[], planMonth: string): ManualSums {
   let expenses = 0;
   let income = 0;
+  let unpaidExpenses = 0;
   for (const e of entries) {
     if (!e || e.month !== planMonth) continue;
     // Despesas do cartão refeição saem do CARTÃO, não da conta — não entram
@@ -25,9 +28,21 @@ export function sumManualEntries(entries: ManualEntry[], planMonth: string): Man
     if (e.viaMealCard) continue;
     const amt = typeof e.amount === 'number' ? e.amount : 0;
     if (e.type === 'income') income += amt;
-    else expenses += amt;
+    else {
+      expenses += amt;
+      if (!e.paid) unpaidExpenses += amt;
+    }
   }
-  return { expenses, income, net: income - expenses };
+  return {
+    expenses: round2(expenses),
+    income: round2(income),
+    net: round2(income - expenses),
+    unpaidExpenses: round2(unpaidExpenses),
+  };
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 /** Total gasto com o cartão refeição no mês corrente. */

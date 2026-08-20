@@ -66,6 +66,9 @@ export interface ManualRow {
   category: CategoryKey;
   note: string | null;
   meal_card?: boolean;
+  /** Instante em que a despesa saiu da conta; null/ausente = por pagar (0016). */
+  paid_at?: string | null;
+  created_at?: string;
 }
 
 export interface GoalDraft {
@@ -138,7 +141,16 @@ export interface Finance {
   unmarkGoalAllocated: (id: string) => Promise<void>;
   setLimit: (category: string, eur: number) => Promise<void>;
   clearLimit: (category: string) => Promise<void>;
-  addManual: (entry: { type: 'income' | 'expense'; amount: number; category: CategoryKey; note: string; mealCard?: boolean }) => Promise<void>;
+  addManual: (entry: {
+    type: 'income' | 'expense';
+    amount: number;
+    category: CategoryKey;
+    note: string;
+    mealCard?: boolean;
+    paid?: boolean;
+  }) => Promise<void>;
+  /** Marca uma despesa como já saída da conta (ou volta a pô-la por pagar). */
+  setManualPaid: (id: string, paid: boolean) => Promise<void>;
   removeManual: (id: string) => Promise<void>;
 }
 
@@ -227,7 +239,7 @@ export function useFinance(): Finance {
     const [{ data: goalData }, { data: limitData }, { data: manualData }, { data: wdData }, { data: allocData }] = await Promise.all([
       supabase.from('goals').select('id,name,icon_key,target_eur,current_eur,target_month,target_year,monthly_allocation,allocation_day').order('created_at'),
       supabase.from('category_limits').select('category,limit_eur'),
-      supabase.from('manual_entries').select('id,month,entry_type,amount,category,note,meal_card,created_at').eq('month', planMonth).order('created_at', { ascending: false }),
+      supabase.from('manual_entries').select('id,month,entry_type,amount,category,note,meal_card,paid_at,created_at').eq('month', planMonth).order('created_at', { ascending: false }),
       supabase.from('goal_withdrawals').select('amount').eq('month', planMonth),
       supabase.from('goal_monthly_allocations').select('goal_id').eq('month', planMonth),
     ]);
@@ -261,12 +273,23 @@ export function useFinance(): Finance {
     setBalanceSet(opening !== null);
     setOpeningBalance(opening ? { id: opening.id, amount: Number(opening.amount), at: opening.created_at ?? '' } : null);
 
+    // Só o que já mexeu MESMO na conta DEPOIS da âncora ajusta o saldo. A
+    // pergunta que cada movimento tem de responder é uma só: o saldo que a
+    // pessoa copiou do banco já te inclui? Para uma receita isso decide-se pela
+    // data em que foi registada; para uma despesa, pela data em que foi PAGA —
+    // uma conta apontada a 19 e paga a 25 saiu depois de uma âncora do dia 20,
+    // por muito que tenha sido escrita antes. Uma despesa por pagar nunca entra
+    // aqui: não baixa o saldo, baixa o disponível, e disso trata o core através
+    // de `unpaidExpenses`.
     let balanceInput: { anchor: number; adjustedNet: number } | null = null;
     if (opening) {
+      const anchorAt = opening.created_at ?? '';
       let adjustedNet = 0;
       for (const m of flowRows) {
-        if (opening.created_at && m.created_at && m.created_at < opening.created_at) continue;
         if (m.meal_card) continue; // pago com o cartão refeição — não sai da conta
+        const movedAt = m.entry_type === 'expense' ? m.paid_at : m.created_at;
+        if (!movedAt) continue; // despesa ainda por pagar
+        if (anchorAt && movedAt < anchorAt) continue; // a âncora já reflete isto
         adjustedNet += (m.entry_type === 'income' ? 1 : -1) * Number(m.amount);
       }
       balanceInput = { anchor: Number(opening.amount), adjustedNet: Math.round(adjustedNet * 100) / 100 };
@@ -360,6 +383,7 @@ export function useFinance(): Finance {
       amount: Number(m.amount),
       category: m.category,
       viaMealCard: m.meal_card === true,
+      paid: m.paid_at != null,
     }));
     // O saldo definido pelo utilizador é dinheiro que ENTROU na conta (ex.: o
     // salário no início do mês) → conta como RECEITA do mês corrente. Fica só
@@ -667,7 +691,14 @@ export function useFinance(): Finance {
   );
 
   const addManual = useCallback(
-    async (entry: { type: 'income' | 'expense'; amount: number; category: CategoryKey; note: string; mealCard?: boolean }) => {
+    async (entry: {
+      type: 'income' | 'expense';
+      amount: number;
+      category: CategoryKey;
+      note: string;
+      mealCard?: boolean;
+      paid?: boolean;
+    }) => {
       if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
@@ -680,10 +711,26 @@ export function useFinance(): Finance {
         category: entry.category,
         note: entry.note || null,
         meal_card: entry.type === 'expense' && entry.mealCard === true,
+        // Só uma despesa da conta tem estado por pagar. Uma receita já entrou e
+        // uma despesa do cartão refeição sai do cartão, não da conta — ambas
+        // nascem resolvidas, com o instante a ser o do próprio registo.
+        paid_at: entry.type !== 'expense' || entry.mealCard === true || entry.paid === true ? new Date().toISOString() : null,
       });
       await reload();
     },
     [planMonth, reload],
+  );
+
+  const setManualPaid = useCallback(
+    async (id: string, paid: boolean) => {
+      if (isDemoActive()) return;
+      await createClient()
+        .from('manual_entries')
+        .update({ paid_at: paid ? new Date().toISOString() : null })
+        .eq('id', id);
+      await reload();
+    },
+    [reload],
   );
 
   const removeManual = useCallback(
@@ -733,6 +780,7 @@ export function useFinance(): Finance {
     setLimit,
     clearLimit,
     addManual,
+    setManualPaid,
     removeManual,
   };
 }

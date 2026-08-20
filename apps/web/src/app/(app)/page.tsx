@@ -68,6 +68,9 @@ export default function HomePage() {
   const [showHow, setShowHow] = useState(false);
   const [balanceInput, setBalanceInput] = useState('');
   const [editingBalance, setEditingBalance] = useState(false);
+  // Ao acertar o saldo, quais das despesas por pagar o utilizador diz que já
+  // saíram. A app não adivinha isto: só ele sabe o que o banco já debitou.
+  const [paidNow, setPaidNow] = useState<string[]>([]);
   const [mealInput, setMealInput] = useState('');
   const [editingMeal, setEditingMeal] = useState(false);
 
@@ -145,12 +148,21 @@ export default function HomePage() {
   const monthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const planKeep = optSavings * (days / monthDays);
 
+  // Despesas registadas este mês que ainda não saíram da conta. É por causa
+  // delas que o saldo do banco pode não bater com o que a app mostra — daí a
+  // pergunta antes de acertar.
+  const unpaidRows = manual.filter((m) => m.entry_type === 'expense' && !m.meal_card && !m.paid_at);
+
   const saveBalance = async () => {
     const v = parseFloat(balanceInput.replace(',', '.'));
     if (Number.isNaN(v)) return;
+    // Primeiro marcar as que já saíram: o novo saldo que o utilizador copia do
+    // banco já as reflete, e sem isto continuariam a descontar do disponível.
+    for (const id of paidNow) await fin.setManualPaid(id, true);
     await fin.setBalance(v);
     setEditingBalance(false);
     setBalanceInput('');
+    setPaidNow([]);
   };
 
   const saveMeal = async () => {
@@ -403,14 +415,15 @@ export default function HomePage() {
               </button>
             </div>
             <div className="balamt">{fmtEur(fs.currentBalance)}</div>
+            {/* A conta tem de fechar no ecrã: saldo − por pagar − reservado = livre.
+                Antes estavam aqui as receitas e despesas do MÊS, que são fluxo, ao
+                lado de um saldo que é uma fotografia — os números não batiam e quem
+                olhava não percebia porquê. O fluxo do mês continua logo abaixo, no
+                gráfico, que é o sítio dele. */}
             <div className="balrow" style={{ marginBottom: 8 }}>
               <div className="bi">
-                <label>{t('chart_income')}</label>
-                <div className="bv iv">+{fmtEur(fs.manualIncomeThisMonth)}</div>
-              </div>
-              <div className="bi">
-                <label>{t('chart_expenses')}</label>
-                <div className="bv ev">−{fmtEur(fs.manualExpensesThisMonth)}</div>
+                <label>{t('bal_unpaid')}</label>
+                <div className="bv ev">−{fmtEur(fs.unpaidExpensesThisMonth)}</div>
               </div>
               <div className="bi">
                 <label>{t('goals_reserved')}</label>
@@ -464,6 +477,63 @@ export default function HomePage() {
           <>
             <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 4 }}>{t('bal_set_title')}</div>
             <div style={{ fontSize: 12, color: 'var(--tx2)', lineHeight: 1.5, marginBottom: 12 }}>{t('bal_set_sub')}</div>
+            {/* Quem acerta o saldo está a copiar um número do banco. Se tinha
+                despesas apontadas por pagar, esse número já pode incluir
+                algumas — e a app não tem como saber quais. Pergunta-se aqui,
+                no momento em que a resposta é óbvia para quem está a olhar
+                para o extrato. */}
+            {editingBalance && unpaidRows.length > 0 && (
+              <div style={{ marginBottom: 12, padding: '11px 12px', borderRadius: 'var(--rs)', background: 'var(--card2)' }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--tx)', marginBottom: 2 }}>{t('bal_confirm_title')}</div>
+                <div style={{ fontSize: 11, color: 'var(--tx2)', lineHeight: 1.45, marginBottom: 9 }}>{t('bal_confirm_sub')}</div>
+                {unpaidRows.map((m) => {
+                  const on = paidNow.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setPaidNow(on ? paidNow.filter((x) => x !== m.id) : [...paidNow, m.id])}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 9,
+                        width: '100%',
+                        padding: '8px 10px',
+                        marginBottom: 5,
+                        borderRadius: 'var(--rs)',
+                        border: on ? '1px solid var(--tx)' : '1px solid var(--b)',
+                        background: 'var(--card)',
+                        cursor: 'pointer',
+                        fontFamily: 'Manrope, sans-serif',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 17,
+                          height: 17,
+                          borderRadius: 5,
+                          border: on ? 'none' : '1.5px solid var(--tx3)',
+                          background: on ? 'var(--tx)' : 'transparent',
+                          color: 'var(--bg)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 11,
+                          fontWeight: 900,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {on ? '✓' : ''}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {m.note || t(`cat_${m.category}` as DictKey)}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--tx2)', flexShrink: 0 }}>−{fmtEur(Number(m.amount))}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 className="auth-input"
@@ -482,7 +552,14 @@ export default function HomePage() {
               </button>
             </div>
             {editingBalance && (
-              <button className="btn-secondary" style={{ marginTop: 8, padding: 10, fontSize: 12 }} onClick={() => setEditingBalance(false)}>
+              <button
+                className="btn-secondary"
+                style={{ marginTop: 8, padding: 10, fontSize: 12 }}
+                onClick={() => {
+                  setEditingBalance(false);
+                  setPaidNow([]);
+                }}
+              >
                 {t('goal_cancel')}
               </button>
             )}
