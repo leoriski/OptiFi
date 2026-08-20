@@ -9,3 +9,6 @@ coverage/
 !.env.example
 .DS_Store
 .vercel
+
+# QR do Expo Go: aponta para o IP da rede local de quem o gerou, não serve a mais ninguém.
+expo-qr.png
