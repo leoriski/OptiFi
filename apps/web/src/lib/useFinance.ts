@@ -240,8 +240,8 @@ export function useFinance(): Finance {
       supabase.from('goals').select('id,name,icon_key,target_eur,current_eur,target_month,target_year,monthly_allocation,allocation_day').order('created_at'),
       supabase.from('category_limits').select('category,limit_eur'),
       supabase.from('manual_entries').select('id,month,entry_type,amount,category,note,meal_card,paid_at,created_at').eq('month', planMonth).order('created_at', { ascending: false }),
-      supabase.from('goal_withdrawals').select('amount').eq('month', planMonth),
-      supabase.from('goal_monthly_allocations').select('goal_id').eq('month', planMonth),
+      supabase.from('goal_withdrawals').select('amount,created_at').eq('month', planMonth),
+      supabase.from('goal_monthly_allocations').select('goal_id,amount,created_at').eq('month', planMonth),
     ]);
 
     // Perfil resiliente: meal_card_eur pode não existir ainda (migração 0006).
@@ -256,7 +256,8 @@ export function useFinance(): Finance {
     setProfileName(profData.name ?? '');
     const mealCardVal = profData.meal_card_eur != null ? Number(profData.meal_card_eur) : 0;
     setMealCard(mealCardVal);
-    const doneAllocIds = ((allocData ?? []) as { goal_id: string }[]).map((a) => a.goal_id);
+    const allocRows = (allocData ?? []) as { goal_id: string; amount: number; created_at?: string }[];
+    const doneAllocIds = allocRows.map((a) => a.goal_id);
     setAllocatedGoalIds(doneAllocIds);
 
     // Saldo real: o movimento de ABERTURA (nota-sentinela) é a âncora; os
@@ -291,6 +292,23 @@ export function useFinance(): Finance {
         if (!movedAt) continue; // despesa ainda por pagar
         if (anchorAt && movedAt < anchorAt) continue; // a âncora já reflete isto
         adjustedNet += (m.entry_type === 'income' ? 1 : -1) * Number(m.amount);
+      }
+      // "Já aloquei" é uma transferência: o dinheiro sai da conta e entra na
+      // meta. O progresso da meta já subia, mas o saldo ficava quieto — e como
+      // a meta deixava de estar reservada, o disponível SUBIA ao alocar, que é
+      // o contrário do que acontece na vida. Baixar aqui o saldo fecha a conta:
+      // o reservado desaparece, o saldo desce o mesmo valor, o disponível não
+      // se mexe. Vale a mesma regra do resto: só as alocações feitas DEPOIS da
+      // âncora, porque uma anterior já está refletida no saldo do banco.
+      for (const a of allocRows) {
+        if (anchorAt && a.created_at && a.created_at < anchorAt) continue;
+        adjustedNet -= Number(a.amount);
+      }
+      // Levantar de uma meta é a mesma transferência ao contrário: o dinheiro
+      // volta da meta para a conta, por isso o saldo tem de subir.
+      for (const w of (wdData ?? []) as { amount: number; created_at?: string }[]) {
+        if (anchorAt && w.created_at && w.created_at < anchorAt) continue;
+        adjustedNet += Number(w.amount);
       }
       balanceInput = { anchor: Number(opening.amount), adjustedNet: Math.round(adjustedNet * 100) / 100 };
     }

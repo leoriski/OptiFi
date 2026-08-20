@@ -220,7 +220,9 @@ const pt = {
   goals_start_nudge: 'Em {month} sobrou-te {surplus}. Podes começar por pôr de lado ~{safe}/mês numa conta-poupança — sem apertar o teu dia-a-dia.',
   goals_start_note: 'É só uma sugestão conservadora (metade da folga). Não é conselho de investimento.',
   goals_free: 'Livre para gastar',
-  goals_free_note: 'O que te sobra depois de reservares dinheiro para as metas.',
+  // O livre já descontava as metas e passou a descontar também o que está por
+  // pagar. Dizer só metade fazia o número parecer errado a quem soma de cabeça.
+  goals_free_note: 'O que te sobra depois de reservares para as metas e de pagares o que tens em falta.',
   goal_add: 'Nova meta',
   goal_name: 'Nome',
   goal_icon: 'Ícone',
@@ -738,7 +740,7 @@ const en: Record<DictKey, string> = {
   goals_start_nudge: 'In {month} you had {surplus} left. You could start by setting aside ~{safe}/mo in a savings account — without squeezing your day-to-day.',
   goals_start_note: 'Just a conservative suggestion (half the surplus). Not investment advice.',
   goals_free: 'Free to spend',
-  goals_free_note: 'The analysed month’s surplus minus what you reserved, plus withdrawals.',
+  goals_free_note: 'What is left after reserving for your goals and paying what you still owe.',
   goal_add: 'New goal',
   goal_name: 'Name',
   goal_icon: 'Icon',
