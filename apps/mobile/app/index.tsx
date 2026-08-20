@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../src/lib/session';
-import { loadFinance, type MobileFinance } from '../src/lib/finance';
+import { loadFinance, type FinanceSnapshot } from '../src/lib/finance';
 import { fmtEur, fill, monthLabel } from '../src/format';
 import { buildTheme } from '../src/theme';
 import { Button, Card, Screen, SectionLabel } from '../src/ui';
@@ -12,7 +12,7 @@ const t = buildTheme('light', 'emerald');
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { signOut } = useSession();
-  const [fin, setFin] = useState<MobileFinance | null>(null);
+  const [fin, setFin] = useState<FinanceSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -45,7 +45,7 @@ export default function Home() {
     );
   }
 
-  const fs = fin?.state ?? null;
+  const fs = fin?.fs ?? null;
   const subsDue = fs?.subsPending;
   // Sem âncora de saldo o motor devolve null: a app não tem como saber quanto
   // está livre, e mostrar zero seria mentir. Por isso o cartão e o aviso das
@@ -59,7 +59,7 @@ export default function Home() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.pr} />}
       >
         <Text style={{ fontSize: 20, fontWeight: '900', color: t.tx, letterSpacing: -0.5 }}>
-          {fin?.name ? `Olá, ${fin.name}` : 'Início'}
+          {fin?.profileName ? `Olá, ${fin.profileName}` : 'Início'}
         </Text>
         <Text style={{ fontSize: 12, color: t.tx2, marginBottom: 13 }}>
           {fin ? monthLabel(fin.planMonth) : ''}

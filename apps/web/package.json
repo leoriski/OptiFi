@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@optifi/core": "*",
+    "@optifi/data": "*",
     "@optifi/ingest": "*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.0",

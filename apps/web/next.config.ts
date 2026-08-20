@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   // Os pacotes @optifi/* são fonte TypeScript; o Next compila-os in-place.
-  transpilePackages: ['@optifi/core', '@optifi/ingest'],
+  transpilePackages: ['@optifi/core', '@optifi/data', '@optifi/ingest'],
   poweredByHeader: false,
   webpack: (config) => {
     // Os pacotes usam imports ESM com extensão .js que apontam para .ts
