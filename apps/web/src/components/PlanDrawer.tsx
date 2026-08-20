@@ -180,7 +180,7 @@ export function PlanDrawer({ open, onClose, fin }: { open: boolean; onClose: () 
                         : isSub
                           ? `${fmtEur(item.spend)}/mês · ${fmtEur(item.spend * 12)}/ano`
                           : item.reason === 'frequency'
-                            ? fill(t('leak_freq_line'), { n: item.count ?? 0, cat: t(`cat_${item.category}` as DictKey), spend: fmtEur(item.spend), saving: fmtEur(item.monthlySaving) })
+                            ? fill(t('leak_freq_line'), { n: item.count ?? 0, cat: t(`cat_${item.category}` as DictKey), month: pastMonth, spend: fmtEur(item.spend), saving: fmtEur(item.monthlySaving) })
                             : fill(t('leak_item_line'), { cat: t(`cat_${item.category}` as DictKey), spend: fmtEur(item.spend), cap: fmtEur(item.capEur) })}
                     </div>
                     <details className="invest-more">
