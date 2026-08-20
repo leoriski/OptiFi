@@ -587,16 +587,18 @@ export function useFinance(): Finance {
       if (isDemoActive()) return;
       const supabase = createClient();
       const uid = await userId();
-      const goal = goals.find((g) => g.id === id);
-      if (!uid || !goal || amount <= 0) return;
-      const capped = Math.min(amount, Number(goal.current_eur));
-      if (capped <= 0) return;
-      // O dinheiro sai da reserva da meta e volta ao disponível do mês.
-      await supabase.from('goals').update({ current_eur: Number(goal.current_eur) - capped }).eq('id', id);
-      await supabase.from('goal_withdrawals').insert({ user_id: uid, goal_id: id, amount: capped, month: planMonth });
+      if (!uid || amount <= 0) return;
+      // O dinheiro sai da reserva da meta e volta ao disponível do mês. A conta é
+      // feita na base de dados sobre o saldo atual (ver goal_adjust), que também
+      // trava no zero e devolve quanto saiu mesmo — é esse valor que fica no
+      // histórico, não o que foi pedido.
+      const { data: applied } = await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: -amount });
+      const taken = -Number(applied ?? 0);
+      if (taken <= 0) return;
+      await supabase.from('goal_withdrawals').insert({ user_id: uid, goal_id: id, amount: taken, month: planMonth });
       await reload();
     },
-    [goals, planMonth, reload],
+    [planMonth, reload],
   );
 
   const markGoalAllocated = useCallback(
@@ -614,7 +616,7 @@ export function useFinance(): Finance {
         .from('goal_monthly_allocations')
         .insert({ user_id: uid, goal_id: id, month: planMonth, amount });
       if (error) return; // já estava marcado (violação de UNIQUE)
-      await supabase.from('goals').update({ current_eur: Number(goal.current_eur) + amount }).eq('id', id);
+      await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: amount });
       await reload();
     },
     [goals, planMonth, reload],
@@ -624,22 +626,20 @@ export function useFinance(): Finance {
     async (id: string) => {
       if (isDemoActive()) return;
       const supabase = createClient();
-      const uid = await userId();
-      const goal = goals.find((g) => g.id === id);
-      if (!uid || !goal) return;
-      const { data: row } = await supabase
+      // Apagar e ler o valor apagado na mesma instrução: de dois cliques
+      // seguidos só um recebe a linha de volta, logo só um desfaz a alocação.
+      const { data: removed } = await supabase
         .from('goal_monthly_allocations')
-        .select('amount')
+        .delete()
         .eq('goal_id', id)
         .eq('month', planMonth)
-        .maybeSingle();
-      if (!row) return;
-      await supabase.from('goal_monthly_allocations').delete().eq('goal_id', id).eq('month', planMonth);
-      const back = Math.max(0, Number(goal.current_eur) - Number((row as { amount: number }).amount));
-      await supabase.from('goals').update({ current_eur: back }).eq('id', id);
+        .select('amount');
+      const amount = Number(removed?.[0]?.amount ?? 0);
+      if (amount <= 0) return;
+      await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: -amount });
       await reload();
     },
-    [goals, planMonth, reload],
+    [planMonth, reload],
   );
 
   const setLimit = useCallback(
