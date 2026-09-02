@@ -85,12 +85,17 @@ A app móvel importa extratos PDF através de uma Edge Function do Supabase
 serverless do PDF.js. O CSV continua a correr só no aparelho; nada muda lá.
 
 ### Deploy da função
-Precisa do Supabase CLI (em qualquer máquina; corre localmente):
+Precisa do Supabase CLI em qualquer máquina (macOS/Linux; corre localmente e
+envia o bundle para o projeto). É a **única** forma de publicar a função — o
+dashboard não aceita carregar Edge Functions com dependências remotas.
 
 ```bash
 # instala uma vez: https://supabase.com/docs/guides/cli
-supabase login
-supabase link --project-ref <o-teu-projeto>
+# macOS:  brew install supabase/tap/supabase   |   linux: (script no site)
+supabase --version        # >= 1.100 (qualquer versão recente serve)
+supabase login            # abre o browser e liga-te à conta do projeto
+supabase link --project-ref <o-teu-projeto>   # ex.: xxxxabc
+supabase projects list    # confirma a que ficas ligado
 
 # publica a função no projeto
 supabase functions deploy import-pdf --no-verify-jwt
@@ -118,8 +123,19 @@ curl -X POST http://127.0.0.1:54321/functions/v1/import-pdf \
   -H "Authorization: Bearer <jwt-do-utilizador>" \
   -F "file=@extrato.pdf"
 ```
-Responde `402`/`401` sem token válido, `413` acima de 8 MB, `422` para PDFs
-ilegíveis (protegidos/digitalizados) e `200` com `lines` quando corre bem.
+Respostas: `401` sem token válido (ou token expirado), `405` noutro método,
+`400` sem `file`, `413` acima de 8 MB, `422` para PDFs ilegíveis
+(protegidos/digitalizados) e `200` com `{ "lines": [...] }` quando corre bem.
+
+### Verificar em produção
+```bash
+curl -X POST https://<o-teu-projeto>.supabase.co/functions/v1/import-pdf \
+  -H "Authorization: Bearer <jwt-do-utilizador>" \
+  -F "file=@extrato.pdf"
+```
+> O JWT é o da sessão do utilizador (`session.access_token`), o mesmo que a
+> app usa para falar com o Supabase. Para um teste rápido, gera um na consola
+> do browser: `supabase.auth.getSession()`.
 
 ## 7. Lembretes diários (só quando ligares notificações)
 As rotas `POST /api/cron/reminders` e `POST /api/cron/daily-tip` exigem o
