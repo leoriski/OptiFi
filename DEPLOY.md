@@ -55,8 +55,16 @@ git push -u origin main
 > públicas. Todas as outras são só de servidor.
 
 ## 4. Supabase — antes do primeiro login
-1. **Migrações:** confirma que as 17 de `supabase/migrations/` estão aplicadas no
-   projeto de produção.
+1. **Migrações:** aplica as 17 de `supabase/migrations/` no projeto de produção
+   (criam o schema RLS + análise):
+   ```bash
+   supabase link --project-ref <o-teu-projeto>
+   supabase db push --linked     # aplica o que faltar (confirma com y)
+   ```
+   O CLI liga-se ao projeto remote via login-role e aplica as migrações; o
+   schema fica completo com as tabelas `profiles`, `transactions`, `imports`,
+   `goals`, `subscriptions`, `category_limits`, `category_rules`,
+   `plan_items`, `manual_entries`, `push_subscriptions`, `goal_*`, etc.
 2. **URLs de auth:** Supabase → Authentication → URL Configuration:
    - **Site URL:** `https://<o-teu-dominio-vercel>`
    - **Redirect URLs:** adiciona
@@ -100,6 +108,11 @@ supabase projects list    # confirma a que ficas ligado
 # publica a função no projeto
 supabase functions deploy import-pdf --no-verify-jwt
 ```
+
+> **Projeto real (produção):** `djsjylkwxijembaneofr` (org "OptiFi", região
+> `eu-west-1`, URL `https://djsjylkwxijembaneofr.supabase.co`). Substitui
+> `<o-teu-projeto>` por este ref nos exemplos. O URL/anon key que a app usa
+> vivem em `apps/web/.env.local` e `apps/mobile/.env` (não versionados).
 
 > `--no-verify-jwt` é de propósito: a validação do JWT é feita **dentro** da
 > função com `auth.getUser()`, para conhecer o utilizador e limitar a taxa de
