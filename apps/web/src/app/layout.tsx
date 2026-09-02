@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { I18nProvider, LANG_COOKIE } from '@/lib/i18n';
 import { RegisterServiceWorker } from '@/components/PwaSetup';
-import type { Lang } from '@/lib/i18n/dict';
+import type { Lang } from '@optifi/core';
 import './globals.css';
 
 export const metadata: Metadata = {

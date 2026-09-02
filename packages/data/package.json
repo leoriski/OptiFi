@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@optifi/core": "*",
-    "@supabase/supabase-js": "^2.49.0"
+    "@supabase/supabase-js": "^2.49.0",
+    "@optifi/ingest": "*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

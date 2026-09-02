@@ -1,5 +1,5 @@
 -- ============================================================
--- OptiFi — Schema inicial (Fase 1)
+-- OptiFi — Schema inicial
 -- Modelo fiel ao protótipo atual: mês fechado importado + análise,
 -- subscrições com veredicto, objetivos com alocação/reserva,
 -- limites por categoria, movimentos manuais do mês corrente.

@@ -22,9 +22,7 @@ import type { FinanceSnapshot, GoalRow, ImportRow, ManualRow, SubRow, TxRow } fr
  * app nativa chamam esta função, por isso não há forma de as duas responderem
  * coisas diferentes à mesma pergunta.
  *
- * As escritas ficam de fora de propósito — cada app tem as suas (a web tem-nas
- * todas, a nativa por agora só lê) e juntá-las aqui seria arrastar para um
- * pacote partilhado código que só um lado usa.
+ * As escritas vivem no `financeWrites` (write.ts), pelo mesmo motivo.
  */
 export async function loadFinanceSnapshot(
   supabase: SupabaseClient,

@@ -5,9 +5,11 @@ import { sendEmail } from '@/lib/server/email';
 
 export const runtime = 'nodejs';
 
-// Job DIÁRIO (chamado por um cron com o header x-cron-secret): lembra cada
-// utilizador das metas cuja alocação mensal é HOJE e ainda não foi feita.
+// Job DIÁRIO (chamado por um cron): lembra cada utilizador das metas cuja
+// alocação mensal é HOJE e ainda não foi feita.
 // Idempotente por dia — reenviar não duplica registos (só reenvia o aviso).
+// O header pode ser `x-cron-secret` (crons externos) ou `Authorization: Bearer`
+// (Vercel Cron).
 
 function monthKey(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -15,7 +17,9 @@ function monthKey(d: Date): string {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get('x-cron-secret') !== secret) {
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  const viaHeader = request.headers.get('x-cron-secret');
+  if (!secret || (bearer !== secret && viaHeader !== secret)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const db = serviceClient();

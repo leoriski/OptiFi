@@ -12,8 +12,12 @@ packages/
               computeFinancialState() é o recalcAll() do protótipo como função
               pura: fonte única de verdade para score, fugas, ritmo, objetivos,
               limites e movimentos manuais.
+  ingest/     Leitura de extratos (CSV e PDF) dos bancos e corretoras PT.
+  data/       Único caminho de leitura financeira (loadFinanceSnapshot).
+              Web e nativa chamam-no; as escritas ficam em cada app.
 apps/
-  web/        (Fase 1) Next.js + Supabase — a aplicação.
+  mobile/     Expo (SDK 54) + expo-router — a app das lojas. É o produto.
+  web/        Next.js + Supabase — site público, links de email e RGPD.
 ```
 
 ## Setup (uma vez)
@@ -41,20 +45,11 @@ A suite de testes usa os dados de demonstração do protótipo como fixture
 **score 57** (34/18/5), **net €760**, **ritmo semanal €258,43**. Qualquer
 alteração ao motor que quebre estes números quebra a especificação.
 
-## Fases (beta fechado: novembro 2026)
+## Decisões de produto
 
-| Fase | Entrega | Estado |
-|---|---|---|
-| 0 | Motor de domínio + testes de paridade | ✅ |
-| 1 | Next.js + Supabase (UE), auth real, schema RLS, i18n PT/EN, temas | ✅ código; falta ligar projeto Supabase |
-| 2 | Ingestão CSV: Revolut, CGD, Millennium + mapeador universal | ✅ código; falta validar com extratos reais |
-| 3 | Análise: score, fugas, cashflow, subscrições, plano de poupança | ✅ validado e2e (correr migração 0002) |
-| 4 | Objetivos, limites por categoria, movimentos do mês corrente | ✅ validado e2e |
-| 5 | 2FA TOTP, RGPD (export/apagamento, política, termos), Sentry | ✅ validado e2e (Sentry pendente; correr migração 0003) |
-| 5b | Parsing de PDF dos 3 bancos | — |
-| 5c | Insights inteligentes determinísticos (substitui o agente IA na v1) | ✅ validado e2e |
-| 6 | Beta fechado por convite | — |
-
-Decisões de produto: sem paywall na v1; app nativa depois do beta (2027);
-sem open banking nesta fase (a camada de ingestão é feita de adaptadores
-para o acomodar mais tarde).
+- A app nativa (`apps/mobile`) é o produto: App Store e Google Play.
+- Sem paywall na v1.
+- Insights determinísticos, calculados no motor — sem agente de IA.
+- Sem open banking: a ingestão é feita por adaptadores de extrato, desenhados
+  para acomodar open banking mais tarde sem reescrever a análise.
+- Beta fechado por convite: novembro de 2026.

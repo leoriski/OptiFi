@@ -5,7 +5,7 @@
 
 import { computeBudgetRule, projection, NEEDS_CATEGORIES } from '@optifi/core';
 import { useI18n, type DictKey } from '@/lib/i18n';
-import { fmtEur, fmtEur0, fill, monthLabel } from '@/lib/format';
+import { fmtEur, fmtEur0, fill, monthLabel } from '@optifi/core';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Drawer } from '@/components/Drawer';
 import type { Finance } from '@/lib/useFinance';

@@ -12,8 +12,7 @@ import { parseCsv, decodeStatementText } from '@optifi/ingest';
 import { prettyMerchant, type CategoryKey } from '@optifi/core';
 import { useI18n, type DictKey } from '@/lib/i18n';
 import { useFinance } from '@/lib/useFinance';
-import { enterDemo, exitDemo } from '@/lib/demo';
-import { fmtEur, monthLabel, fill } from '@/lib/format';
+import { fmtEur, monthLabel, fill } from '@optifi/core';
 import { CategoryIcon, CATEGORY_COLOR } from '@/components/CategoryIcon';
 
 type Bank = 'revolut' | 'cgd' | 'bcp' | 'outro';
@@ -44,7 +43,7 @@ const linkBtn: React.CSSProperties = {
   fontFamily: 'Manrope, sans-serif',
 };
 
-const FILTER_ORDER: CategoryKey[] =['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
+const FILTER_ORDER: CategoryKey[] = ['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'receita', 'outros'];
 const MANUAL_CATS: CategoryKey[] = ['habitacao', 'alimentacao', 'transporte', 'lazer', 'subscricoes', 'saude', 'educacao', 'transferencias', 'outros'];
 
 /** Caixa de seleção larga usada nas opções do registo manual. */
@@ -105,12 +104,6 @@ export default function ActivityPage() {
   const router = useRouter();
   const fin = useFinance();
   const { loading, imported, imp, txs, subs, manual, planMonth } = fin;
-
-  // Entra no modo demonstração (perfil Ana) e leva à Home populada.
-  const startDemo = () => {
-    enterDemo();
-    router.push('/');
-  };
 
   const [wiz, setWiz] = useState<WizStep>(null);
   const [bank, setBank] = useState<Bank>('revolut');
@@ -180,7 +173,6 @@ export default function ActivityPage() {
     if (res.ok) {
       pendingFile.current = null;
       setWiz(null);
-      exitDemo(); // uma importação REAL desliga o modo demonstração
       await fin.reload();
       return;
     }
@@ -268,16 +260,6 @@ export default function ActivityPage() {
               ))}
             </div>
             <div style={{ fontSize: 10, color: 'var(--tx3)', marginTop: 12 }}>{t('wiz_privacy')}</div>
-            {!imported && (
-              <>
-                <div className="wiz-demo-sep"><span>{t('wiz_demo_or')}</span></div>
-                <button className="wiz-demo-btn" onClick={startDemo}>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
-                  <span>{t('wiz_demo_cta')}</span>
-                </button>
-                <div className="wiz-demo-hint">{t('wiz_demo_hint')}</div>
-              </>
-            )}
             {imported && (
               <button className="wiz-back" style={{ marginTop: 12 }} onClick={() => setWiz(null)}>
                 {t('wiz_back')}

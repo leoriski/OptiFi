@@ -1,5 +1,5 @@
 -- ============================================================
--- OptiFi — Fase visual/Home: saldo real ligado a tudo
+-- OptiFi — Saldo real ligado a tudo
 -- O utilizador define o saldo atual UMA vez (âncora); a partir daí cada
 -- movimento manual ajusta-o. Os extratos guardam o saldo final do banco
 -- para sugerir a âncora. Correr em: Supabase Dashboard → SQL Editor.

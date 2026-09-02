@@ -18,7 +18,7 @@ import {
   Tooltip,
   type ChartConfiguration,
 } from 'chart.js';
-import { fmtEur, fmtEur0 } from '@/lib/format';
+import { fmtEur, fmtEur0 } from '@optifi/core';
 
 Chart.register(BarController, BarElement, LineController, LineElement, PointElement, CategoryScale, LinearScale, Legend, Tooltip);
 

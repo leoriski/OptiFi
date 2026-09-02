@@ -1,4 +1,5 @@
-import { prettyMerchant, type CategoryKey } from '@optifi/core';
+import { prettyMerchant } from './catalog.js';
+import type { CategoryKey } from './types.js';
 
 /**
  * Regras de categorização do utilizador: "tudo o que aparece como X é da

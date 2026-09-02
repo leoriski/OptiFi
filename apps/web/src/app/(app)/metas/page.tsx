@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { useFinance, type GoalRow } from '@/lib/useFinance';
-import { fmtEur, fmtEur0, fill, monthLabel } from '@/lib/format';
+import { fmtEur, fmtEur0, fill, monthLabel } from '@optifi/core';
 import { EmptyImportState } from '@/components/EmptyImportState';
 import { Drawer } from '@/components/Drawer';
 import { GoalIcon, GoalIconPicker } from '@/components/GoalIcon';
@@ -54,7 +54,7 @@ export default function GoalsPage() {
   }
 
   const locale = lang === 'pt' ? 'pt-PT' : 'en-GB';
-  const monthName = (m: number) => new Date(2026, m - 1, 1).toLocaleDateString(locale, { month: 'long' });
+  const monthName = (m: number) => new Date(new Date().getFullYear(), m - 1, 1).toLocaleDateString(locale, { month: 'long' });
   const dateLabel = (d: Date) => d.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
 
   const openEdit = (g: GoalRow) =>

@@ -103,7 +103,7 @@ export function groupSubscriptions(
  * escolhe o mês dominante do ficheiro (o utilizador pode exportar períodos
  * com dias soltos de meses vizinhos), filtra para esse mês, categoriza,
  * atribui fingerprints e deriva os agregados que alimentam o motor.
- * base_leak NÃO é derivado aqui — as fugas nascem da análise (Fase 3).
+ * base_leak NÃO é derivado aqui — as fugas nascem da análise.
  */
 export function buildStatement(txs: ParsedTransaction[], endingBalance?: number): StatementSummary {
   if (txs.length === 0) throw new IngestError('no_rows', 'Sem movimentos');

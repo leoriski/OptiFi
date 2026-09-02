@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useI18n, type DictKey } from '@/lib/i18n';
-import { fill } from '@/lib/format';
+import { fill } from '@optifi/core';
 import { Drawer } from '@/components/Drawer';
 import { SecuritySection } from '@/components/SecuritySection';
 import { pushSupported, isPushEnabled, enablePush, disablePush } from '@/lib/push';
@@ -351,7 +351,7 @@ export default function ProfilePage() {
           fontFamily: 'Manrope, sans-serif',
         }}
       >
-        [→ {t('profile_logout')}
+        → {t('profile_logout')}
       </button>
       <button
         onClick={() => void deleteAccount()}

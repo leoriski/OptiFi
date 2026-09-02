@@ -2,11 +2,10 @@
 
 // O elo entre a base de dados e o motor: carrega o mês importado, gera a
 // análise (função pura) e calcula o estado financeiro completo. Todas as
-// vistas leem daqui — a fonte única de verdade. Fase 4: objetivos, limites
+// vistas leem daqui — a fonte única de verdade. Objetivos, limites
 // por categoria e movimentos manuais entram no cálculo.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { isDemoActive, buildDemoFinance, emptyDemoOverrides, DEMO_PROFILE_NAME, type DemoOverrides } from './demo';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   monthKey,
   type Analysis,
@@ -18,7 +17,7 @@ import {
   type PlanState,
   type SubscriptionStatus,
 } from '@optifi/core';
-import { OPENING_NOTE, loadFinanceSnapshot } from '@optifi/data';
+import { OPENING_NOTE, financeWrites, loadFinanceSnapshot, type GoalDraft } from '@optifi/data';
 import { createClient } from './supabase/client';
 
 // As linhas da base de dados e o carregador vivem no @optifi/data para a app
@@ -28,17 +27,7 @@ export type { GoalRow, ImportRow, ManualRow, OpeningBalance, SubRow, TxRow } fro
 export { OPENING_NOTE };
 import type { GoalRow, ImportRow, ManualRow, OpeningBalance, SubRow, TxRow } from '@optifi/data';
 
-export interface GoalDraft {
-  id?: string;
-  name: string;
-  icon_key: string;
-  target_eur: number;
-  current_eur: number;
-  target_month: number;
-  target_year: number;
-  monthly_allocation: number;
-  allocation_day: number;
-}
+export type { GoalDraft };
 
 export interface Finance {
   loading: boolean;
@@ -105,13 +94,6 @@ export interface Finance {
   setTxCategory: (merchant: string, category: CategoryKey) => Promise<void>;
 }
 
-async function userId(): Promise<string | null> {
-  const {
-    data: { user },
-  } = await createClient().auth.getUser();
-  return user?.id ?? null;
-}
-
 export function useFinance(): Finance {
   const [loading, setLoading] = useState(true);
   const [imp, setImp] = useState<ImportRow | null>(null);
@@ -133,35 +115,7 @@ export function useFinance(): Finance {
   const [allocatedGoalIds, setAllocatedGoalIds] = useState<string[]>([]);
   const planMonth = monthKey(new Date());
 
-  // Overrides interativos do modo-demo (subs canceladas, plano feito) — em ref
-  // para o reload ler sempre o valor mais recente sem recriar o callback.
-  const demoOv = useRef<DemoOverrides>(emptyDemoOverrides());
-
   const reload = useCallback(async () => {
-    // ── Modo demonstração: tudo em memória, pelo mesmo motor, zero base de dados ──
-    if (isDemoActive()) {
-      const d = buildDemoFinance(planMonth, demoOv.current);
-      setImp(d.imp);
-      setHistory(d.history);
-      setProfileName(DEMO_PROFILE_NAME);
-      setGoals(d.goals);
-      setLimits({});
-      setManual([]);
-      setMealCard(0);
-      setAllocatedGoalIds([]);
-      setBalanceSet(false);
-      setOpeningBalance(null);
-      setCategorySpend(d.categorySpend);
-      setSubs(d.subs);
-      setTxs(d.txs);
-      setAnalysis(d.analysis);
-      setSmart(d.smart);
-      setPlanState(d.planState);
-      setFs(d.fs);
-      setLoading(false);
-      return;
-    }
-
     const snap = await loadFinanceSnapshot(createClient());
     setImp(snap.imp);
     setHistory(snap.history);
@@ -183,295 +137,67 @@ export function useFinance(): Finance {
     setLoading(false);
   }, [planMonth]);
 
+  // As escritas montam-se uma vez só; o ref dá-lhes sempre o recarregamento
+  // atual sem as obrigar a remontar a cada render.
+  const reloadRef = useRef(reload);
+  reloadRef.current = reload;
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
-  const setSubVerdict = useCallback(
-    async (id: string, status: SubscriptionStatus) => {
-      if (isDemoActive()) {
-        demoOv.current.subStatus[id] = status;
-        await reload();
-        return;
-      }
-      await createClient().from('subscriptions').update({ user_status: status }).eq('id', id);
-      await reload();
-    },
-    [reload],
-  );
+  // Todas as escritas de dinheiro vivem no @optifi/data, partilhadas com a app
+  // nativa. Uma segunda cópia destas regras aqui acabaria por divergir, e é aí
+  // que as duas apps começam a mostrar saldos diferentes. Aqui só se encadeia
+  // o recarregamento a seguir a cada escrita.
+  const writes = useMemo(() => {
+    const w = financeWrites(createClient());
+    const after =
+      <A extends unknown[]>(fn: (...args: A) => Promise<void>) =>
+      async (...args: A) => {
+        await fn(...args);
+        await reloadRef.current();
+      };
+    return {
+      setSubVerdict: after(w.setSubVerdict),
+      setBalance: after(w.setBalance),
+      setMealCardValue: after(w.setMealCardValue),
+      clearBalance: after(w.clearBalance),
+      addSubscription: after(w.addSubscription),
+      removeSubscription: after(w.removeSubscription),
+      saveGoal: after(w.saveGoal),
+      deleteGoal: after(w.deleteGoal),
+      setAllocation: after(w.setAllocation),
+      withdrawFromGoal: after(w.withdrawFromGoal),
+      unmarkGoalAllocated: after(w.unmarkGoalAllocated),
+      setLimit: after(w.setLimit),
+      clearLimit: after(w.clearLimit),
+      addManual: after(w.addManual),
+      setManualPaid: after(w.setManualPaid),
+      removeManual: after(w.removeManual),
+      raw: w,
+    };
+  }, []);
 
-  const setBalance = useCallback(
-    async (eur: number) => {
-      if (isDemoActive()) return;
-      const uid = await userId();
-      // amount tem CHECK > 0 no schema; o saldo de abertura é "quanto tens",
-      // por isso exigimos ≥ 0 e guardamos ≥ 0.01 para respeitar a constraint.
-      if (!uid || Number.isNaN(eur) || eur < 0) return;
-      const supabase = createClient();
-      // Substitui qualquer abertura anterior deste mês → nova âncora "agora".
-      await supabase.from('manual_entries').delete().eq('user_id', uid).eq('month', planMonth).eq('note', OPENING_NOTE);
-      await supabase.from('manual_entries').insert({
-        user_id: uid,
-        month: planMonth,
-        entry_type: 'income',
-        amount: Math.max(0.01, eur),
-        category: 'outros',
-        note: OPENING_NOTE,
-      });
-      await reload();
-    },
-    [planMonth, reload],
-  );
-
-  const setMealCardValue = useCallback(
-    async (eur: number) => {
-      if (isDemoActive()) return;
-      const uid = await userId();
-      if (!uid || Number.isNaN(eur) || eur < 0) return;
-      await createClient().from('profiles').update({ meal_card_eur: eur }).eq('id', uid);
-      await reload();
-    },
-    [reload],
-  );
-
-  const clearBalance = useCallback(async () => {
-    if (isDemoActive()) return;
-    const uid = await userId();
-    if (!uid) return;
-    await createClient().from('manual_entries').delete().eq('user_id', uid).eq('month', planMonth).eq('note', OPENING_NOTE);
-    await reload();
-  }, [planMonth, reload]);
-
-  const addSubscription = useCallback(
-    async (name: string, price: number) => {
-      if (isDemoActive()) return;
-      const uid = await userId();
-      if (!uid || !name.trim() || !(price > 0)) return;
-      // import_id null = manual; sobrevive a reimportações. Começa 'unknown'
-      // para a app perguntar "usas?" como nas detetadas.
-      await createClient().from('subscriptions').insert({ user_id: uid, import_id: null, name: name.trim(), price });
-      await reload();
-    },
-    [reload],
-  );
-
-  const removeSubscription = useCallback(
-    async (id: string) => {
-      if (isDemoActive()) return;
-      await createClient().from('subscriptions').delete().eq('id', id);
-      await reload();
-    },
-    [reload],
-  );
-
+  // As duas que precisam de contexto que só esta camada tem: o item do plano
+  // pertence ao mês importado, e marcar uma alocação precisa da meta inteira.
   const setPlanItemState = useCallback(
     async (itemKey: string, state: PlanItemStatus, title: string, saving: number) => {
-      if (isDemoActive()) {
-        demoOv.current.planState[itemKey] = { state };
-        await reload();
-        return;
-      }
       if (!imp) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid) return;
-      const { data: updated } = await supabase
-        .from('plan_items')
-        .update({ state, monthly_saving: saving })
-        .eq('import_id', imp.id)
-        .eq('item_key', itemKey)
-        .select('id');
-      if (!updated || updated.length === 0) {
-        await supabase.from('plan_items').insert({
-          user_id: uid,
-          import_id: imp.id,
-          item_key: itemKey,
-          title,
-          monthly_saving: saving,
-          state,
-        });
-      }
+      await writes.raw.setPlanItemState(imp.id, itemKey, state, title, saving);
       await reload();
     },
-    [imp, reload],
-  );
-
-  const saveGoal = useCallback(
-    async (draft: GoalDraft) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid) return;
-      const row = {
-        name: draft.name,
-        icon_key: draft.icon_key,
-        target_eur: draft.target_eur,
-        current_eur: draft.current_eur,
-        target_month: draft.target_month,
-        target_year: draft.target_year,
-        monthly_allocation: draft.monthly_allocation,
-        allocation_day: draft.allocation_day,
-      };
-      if (draft.id) await supabase.from('goals').update(row).eq('id', draft.id);
-      else await supabase.from('goals').insert({ ...row, user_id: uid });
-      await reload();
-    },
-    [reload],
-  );
-
-  const deleteGoal = useCallback(
-    async (id: string) => {
-      if (isDemoActive()) return;
-      await createClient().from('goals').delete().eq('id', id);
-      await reload();
-    },
-    [reload],
-  );
-
-  const setAllocation = useCallback(
-    async (id: string, value: number) => {
-      if (isDemoActive()) return;
-      await createClient().from('goals').update({ monthly_allocation: Math.max(0, value) }).eq('id', id);
-      await reload();
-    },
-    [reload],
-  );
-
-  const withdrawFromGoal = useCallback(
-    async (id: string, amount: number) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid || amount <= 0) return;
-      // O dinheiro sai da reserva da meta e volta ao disponível do mês. A conta é
-      // feita na base de dados sobre o saldo atual (ver goal_adjust), que também
-      // trava no zero e devolve quanto saiu mesmo — é esse valor que fica no
-      // histórico, não o que foi pedido.
-      const { data: applied } = await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: -amount });
-      const taken = -Number(applied ?? 0);
-      if (taken <= 0) return;
-      await supabase.from('goal_withdrawals').insert({ user_id: uid, goal_id: id, amount: taken, month: planMonth });
-      await reload();
-    },
-    [planMonth, reload],
+    [imp, reload, writes],
   );
 
   const markGoalAllocated = useCallback(
     async (id: string) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
       const goal = goals.find((g) => g.id === id);
-      if (!uid || !goal) return;
-      const amount = Number(goal.monthly_allocation) || 0;
-      if (amount <= 0) return;
-      // Regista a alocação do mês (idempotente por meta+mês) e faz avançar o
-      // progresso da meta. O dinheiro já saiu da conta → deixa de ser descontado.
-      const { error } = await supabase
-        .from('goal_monthly_allocations')
-        .insert({ user_id: uid, goal_id: id, month: planMonth, amount });
-      if (error) return; // já estava marcado (violação de UNIQUE)
-      await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: amount });
+      if (!goal) return;
+      await writes.raw.markGoalAllocated(goal);
       await reload();
     },
-    [goals, planMonth, reload],
-  );
-
-  const unmarkGoalAllocated = useCallback(
-    async (id: string) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      // Apagar e ler o valor apagado na mesma instrução: de dois cliques
-      // seguidos só um recebe a linha de volta, logo só um desfaz a alocação.
-      const { data: removed } = await supabase
-        .from('goal_monthly_allocations')
-        .delete()
-        .eq('goal_id', id)
-        .eq('month', planMonth)
-        .select('amount');
-      const amount = Number(removed?.[0]?.amount ?? 0);
-      if (amount <= 0) return;
-      await supabase.rpc('goal_adjust', { p_goal_id: id, p_delta: -amount });
-      await reload();
-    },
-    [planMonth, reload],
-  );
-
-  const setLimit = useCallback(
-    async (category: string, eur: number) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid || eur < 0) return;
-      await supabase.from('category_limits').upsert({ user_id: uid, category, limit_eur: eur }, { onConflict: 'user_id,category' });
-      await reload();
-    },
-    [reload],
-  );
-
-  const clearLimit = useCallback(
-    async (category: string) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid) return;
-      await supabase.from('category_limits').delete().eq('user_id', uid).eq('category', category);
-      await reload();
-    },
-    [reload],
-  );
-
-  const addManual = useCallback(
-    async (entry: {
-      type: 'income' | 'expense';
-      amount: number;
-      category: CategoryKey;
-      note: string;
-      mealCard?: boolean;
-      paid?: boolean;
-    }) => {
-      if (isDemoActive()) return;
-      const supabase = createClient();
-      const uid = await userId();
-      if (!uid || entry.amount <= 0) return;
-      await supabase.from('manual_entries').insert({
-        user_id: uid,
-        month: planMonth,
-        entry_type: entry.type,
-        amount: entry.amount,
-        category: entry.category,
-        note: entry.note || null,
-        meal_card: entry.type === 'expense' && entry.mealCard === true,
-        // Só uma despesa da conta tem estado por pagar. Uma receita já entrou e
-        // uma despesa do cartão refeição sai do cartão, não da conta — ambas
-        // nascem resolvidas, com o instante a ser o do próprio registo.
-        paid_at: entry.type !== 'expense' || entry.mealCard === true || entry.paid === true ? new Date().toISOString() : null,
-      });
-      await reload();
-    },
-    [planMonth, reload],
-  );
-
-  const setManualPaid = useCallback(
-    async (id: string, paid: boolean) => {
-      if (isDemoActive()) return;
-      await createClient()
-        .from('manual_entries')
-        .update({ paid_at: paid ? new Date().toISOString() : null })
-        .eq('id', id);
-      await reload();
-    },
-    [reload],
-  );
-
-  const removeManual = useCallback(
-    async (id: string) => {
-      if (isDemoActive()) return;
-      await createClient().from('manual_entries').delete().eq('id', id);
-      await reload();
-    },
-    [reload],
+    [goals, reload, writes],
   );
 
   /**
@@ -484,7 +210,6 @@ export function useFinance(): Finance {
    */
   const setTxCategory = useCallback(
     async (merchant: string, category: CategoryKey) => {
-      if (isDemoActive()) return;
       const res = await fetch('/api/categorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -517,25 +242,25 @@ export function useFinance(): Finance {
     openingBalance,
     mealCard,
     reload,
-    setBalance,
-    setMealCardValue,
-    clearBalance,
-    setSubVerdict,
-    addSubscription,
-    removeSubscription,
+    setBalance: writes.setBalance,
+    setMealCardValue: writes.setMealCardValue,
+    clearBalance: writes.clearBalance,
+    setSubVerdict: writes.setSubVerdict,
+    addSubscription: writes.addSubscription,
+    removeSubscription: writes.removeSubscription,
     setPlanItemState,
-    saveGoal,
-    deleteGoal,
-    setAllocation,
-    withdrawFromGoal,
+    saveGoal: writes.saveGoal,
+    deleteGoal: writes.deleteGoal,
+    setAllocation: writes.setAllocation,
+    withdrawFromGoal: writes.withdrawFromGoal,
     markGoalAllocated,
-    unmarkGoalAllocated,
+    unmarkGoalAllocated: writes.unmarkGoalAllocated,
     allocatedGoalIds,
-    setLimit,
-    clearLimit,
-    addManual,
-    setManualPaid,
-    removeManual,
+    setLimit: writes.setLimit,
+    clearLimit: writes.clearLimit,
+    addManual: writes.addManual,
+    setManualPaid: writes.setManualPaid,
+    removeManual: writes.removeManual,
     setTxCategory,
   };
 }

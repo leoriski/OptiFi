@@ -96,7 +96,7 @@ export async function middleware(request: NextRequest) {
   // passo que dá vida à app — em vez de um Início vazio. Redirecionamento suave
   // (só na home): as outras páginas continuam livres para explorar, e a query
   // extra corre apenas nesta rota.
-  if (user && pathname === '/' && request.cookies.get('optifi_demo')?.value !== '1') {
+  if (user && pathname === '/') {
     const { data: firstImport } = await supabase.from('imports').select('id').limit(1);
     if (!firstImport || firstImport.length === 0) {
       const url = request.nextUrl.clone();

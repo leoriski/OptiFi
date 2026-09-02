@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
-import { DICTS, type DictKey, type Lang } from './dict';
+import { DICTS, type DictKey, type Lang } from '@optifi/core';
 
 interface I18nCtx {
   lang: Lang;

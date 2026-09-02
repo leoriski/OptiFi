@@ -1,5 +1,5 @@
 -- ============================================================
--- OptiFi — Fase 5: apagamento de conta (RGPD, art. 17.º)
+-- OptiFi — Apagamento de conta (RGPD, art. 17.º)
 -- Função SECURITY DEFINER que permite ao próprio utilizador apagar a sua
 -- conta auth.users; todas as tabelas da app têm ON DELETE CASCADE, por isso
 -- isto elimina TODOS os dados do utilizador de uma vez.

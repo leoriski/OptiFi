@@ -18,6 +18,7 @@ export { buildStatement, categorizeStatement, groupSubscriptions, summariseTotal
 export { parseWithMapping } from './adapters/generic.js';
 export { autoParse } from './adapters/auto.js';
 export { parsePdfStatementLines, pdfContentStart } from './pdf.js';
+export { rebuildPdfLines, type TextFragment, type PdfPageText } from './pdf-lines.js';
 export { revolutAdapter } from './adapters/revolut.js';
 export { cgdAdapter } from './adapters/cgd.js';
 export { bcpAdapter } from './adapters/bcp.js';

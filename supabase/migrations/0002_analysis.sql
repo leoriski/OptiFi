@@ -1,5 +1,5 @@
 -- ============================================================
--- OptiFi — Fase 3: estado dos itens do plano de poupança
+-- OptiFi — Estado dos itens do plano de poupança
 -- Os itens são DERIVADOS dos movimentos (função pura, nunca guardados);
 -- só a decisão do utilizador (feito/ignorado) persiste, chaveada por
 -- item_key estável (ex.: 'cap_lazer') dentro de cada import.

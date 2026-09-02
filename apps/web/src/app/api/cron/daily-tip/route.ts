@@ -5,14 +5,18 @@ import { tipOfTheDay } from '@/lib/server/tips';
 
 export const runtime = 'nodejs';
 
-// Job DIÁRIO (header x-cron-secret): envia a dica do dia por notificação a quem
-// tem push ativo e não a desligou. Separado do cron de metas porque o público é
-// outro — as metas só tocam a quem tem alocação hoje, a dica vai a toda a gente.
+// Job DIÁRIO: envia a dica do dia por notificação a quem tem push ativo e não a
+// desligou. Separado do cron de metas porque o público é outro — as metas só
+// tocam a quem tem alocação hoje, a dica vai a toda a gente.
 // Só push: uma dica não justifica um email.
+// O header pode ser `x-cron-secret` (crons externos) ou `Authorization: Bearer`
+// (Vercel Cron).
 
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get('x-cron-secret') !== secret) {
+  const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  const viaHeader = request.headers.get('x-cron-secret');
+  if (!secret || (bearer !== secret && viaHeader !== secret)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const db = serviceClient();

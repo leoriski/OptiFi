@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 import { daysLeftInMonth, importCadence } from '@optifi/core';
 import { useI18n, type DictKey } from '@/lib/i18n';
 import { useFinance } from '@/lib/useFinance';
-import { fmtEur, fmtEur0, monthLabel, monthShort, fill } from '@/lib/format';
+import { fmtEur, fmtEur0, monthLabel, monthShort, fill } from '@optifi/core';
 import { EmptyImportState } from '@/components/EmptyImportState';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CashflowChart, type CashflowPoint } from '@/components/CashflowChart';

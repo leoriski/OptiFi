@@ -294,6 +294,21 @@
   border-color: var(--b);
 }
 
+/* Metas: o resumo trazia um gradiente azul/verde fixo do protótipo, que ficava
+   a discutir com o accent escolhido. Passa a ser o accent, como o resto. */
+.goals-summary-card {
+  background: color-mix(in srgb, var(--pr) 8%, transparent);
+  border-color: color-mix(in srgb, var(--pr) 20%, transparent);
+}
+
+/* Barra de baixo: o chip do separador ativo tinha o azul fixo do protótipo por
+   baixo de um ícone que já segue o accent. O modo claro já tinha sido
+   corrigido (prototype.css), o escuro ficou para trás — os 12% são os mesmos
+   nos dois para a barra não mudar de tom com o tema. */
+.nb.on .nb-icon {
+  background: color-mix(in srgb, var(--pr) 12%, transparent);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    PWA / telemóvel
    Com viewport-fit=cover a página passa a desenhar por baixo do notch e do
