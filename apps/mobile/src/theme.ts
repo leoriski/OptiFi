@@ -24,6 +24,10 @@ const MODES = {
     gr: '#22C55E',
     re: '#F43F5E',
     ye: '#F59E0B',
+    // Linha "Sobra" do gráfico: azul fixo, independente do accent. Se seguisse
+    // o accent, com o tema emerald ficavam dois verdes ao lado das barras de
+    // receitas e não se distinguia um do outro.
+    chartNet: '#38BDF8',
   },
   light: {
     bg: '#F7F8FA',
@@ -39,6 +43,8 @@ const MODES = {
     gr: '#16A34A',
     re: '#E11D48',
     ye: '#D97706',
+    // Sobre branco o #38BDF8 desaparece numa linha fina — desce-se um tom.
+    chartNet: '#0EA5E9',
   },
 } as const;
 
@@ -65,6 +71,8 @@ export interface Theme {
   gr: string;
   re: string;
   ye: string;
+  /** Linha do líquido no gráfico — nunca o accent (ver MODES). */
+  chartNet: string;
   pr: string;
   ac: string;
   /** Raio dos cartões (era --r) e dos elementos pequenos (era --rs). */

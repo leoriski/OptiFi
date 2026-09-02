@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -79,4 +79,23 @@ export function useAppLock(hasSession: boolean): LockState {
   }, [enabled, hasSession]);
 
   return { available, enabled, locked: ready && enabled && locked && hasSession, unlock, setEnabled };
+}
+
+/**
+ * O bloqueio tem de ser um só para a app toda. Enquanto isto era um hook
+ * chamado no _layout, o ecrã de Perfil que quisesse o interruptor chamava-o
+ * outra vez e ficava com um estado paralelo: o interruptor mudava, mas o ecrã
+ * que tranca a app nunca dava por isso. Daí o contexto.
+ */
+const LockCtx = createContext<LockState | null>(null);
+
+export function LockProvider({ hasSession, children }: { hasSession: boolean; children: ReactNode }) {
+  const value = useAppLock(hasSession);
+  return <LockCtx.Provider value={value}>{children}</LockCtx.Provider>;
+}
+
+export function useLock(): LockState {
+  const ctx = useContext(LockCtx);
+  if (!ctx) throw new Error('useLock tem de estar dentro do LockProvider');
+  return ctx;
 }

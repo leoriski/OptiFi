@@ -11,6 +11,18 @@ if (!url || !anonKey) {
   );
 }
 
+/**
+ * Onde aterram os links que o Supabase manda por email (confirmar a conta,
+ * recuperar a password). Com build de loja o esquema `optifi://` está
+ * registado e o link abre a própria app (`app/auth/confirm.tsx`). No Expo Go
+ * o esquema não existe — para testar lá, define `EXPO_PUBLIC_AUTH_REDIRECT`
+ * para o URL `exp://` do projeto de desenvolvimento.
+ */
+export const AUTH_REDIRECT = process.env.EXPO_PUBLIC_AUTH_REDIRECT ?? 'optifi://auth/confirm';
+
+/** Site público — só para abrir as páginas legais (termos/privacidade). */
+export const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://optifi.pt';
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     // O browser guardava a sessão sozinho; aqui é preciso dizer onde.

@@ -28,8 +28,11 @@
       "expo-router",
       [
         "expo-local-authentication",
-        { "faceIDPermission": "A OptiFi usa o Face ID para desbloquear as tuas contas." }
-      ]
+        {
+          "faceIDPermission": "A OptiFi usa o Face ID para desbloquear as tuas contas."
+        }
+      ],
+      "expo-font"
     ]
   }
 }
