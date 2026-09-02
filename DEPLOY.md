@@ -5,7 +5,7 @@ em **Vercel + GitHub** (recomendado). Segue os passos por ordem.
 
 ## Pré-requisitos
 - Conta **GitHub** e conta **Vercel**.
-- Projeto **Supabase** já criado (região UE). As 12 migrações em
+- Projeto **Supabase** já criado (região UE). As 17 migrações em
   `supabase/migrations/` têm de estar aplicadas nesse projeto.
 
 ---
@@ -55,14 +55,22 @@ git push -u origin main
 > públicas. Todas as outras são só de servidor.
 
 ## 4. Supabase — antes do primeiro login
-1. **Migrações:** confirma que as 12 de `supabase/migrations/` estão aplicadas no
+1. **Migrações:** confirma que as 17 de `supabase/migrations/` estão aplicadas no
    projeto de produção.
 2. **URLs de auth:** Supabase → Authentication → URL Configuration:
    - **Site URL:** `https://<o-teu-dominio-vercel>`
-   - **Redirect URLs:** adiciona `https://<dominio>/auth/callback` e
-     `https://<dominio>/auth/confirm`
+   - **Redirect URLs:** adiciona
+     - `https://<dominio>/auth/callback` e `https://<dominio>/auth/confirm` (web)
+     - `optifi://auth/confirm` (app móvel — os links de email abrem a própria app)
+     - em testes com Expo Go, também o `exp://` do teu dev server
+       (ex.: `exp://192.168.1.10:8081`)
    Sem isto, o registo/confirmação de email e o OAuth falham.
 3. **Emails de confirmação:** configura o SMTP/remetente em Supabase → Auth.
+4. **App móvel:** a app espera os links no esquema `optifi://` (definido em
+   `apps/mobile/app.json` → `scheme`). Em produção o `optifi://auth/confirm`
+   abre `app/auth/confirm.tsx`, que valida o token e segue para o destino
+   (`/update-password` na recuperação). Para o Expo Go, define
+   `EXPO_PUBLIC_AUTH_REDIRECT` no `apps/mobile/.env`.
 
 ## 5. Deploy + teste de conta nova
 1. Carrega **Deploy** no Vercel.
@@ -70,15 +78,67 @@ git push -u origin main
    confirma que aterras **direto no wizard de importação** (não num Início
    vazio). Importa um extrato real (CSV ou PDF) e verifica a análise.
 
-## 6. Lembretes diários (só quando ligares notificações)
-A rota `POST /api/cron/reminders` exige o header **`x-cron-secret`** = `CRON_SECRET`.
-- **Nota:** o Vercel Cron envia `Authorization: Bearer <CRON_SECRET>`, **não**
-  `x-cron-secret`. Portanto, para lembretes tens duas opções:
-  1. Usar um cron externo (ex.: cron-job.org, GitHub Actions) que envie o header
-     `x-cron-secret`, ou
-  2. Ajustar a rota para também aceitar `Authorization: Bearer` (1 linha) e usar
-     Vercel Cron.
-- Isto só é preciso quando ativares email/push; a app funciona sem.
+## 6. Edge Function — importação de PDF no telemóvel
+
+A app móvel importa extratos PDF através de uma Edge Function do Supabase
+(`import-pdf`) que extrai as **linhas** de texto do ficheiro usando a build
+serverless do PDF.js. O CSV continua a correr só no aparelho; nada muda lá.
+
+### Deploy da função
+Precisa do Supabase CLI (em qualquer máquina; corre localmente):
+
+```bash
+# instala uma vez: https://supabase.com/docs/guides/cli
+supabase login
+supabase link --project-ref <o-teu-projeto>
+
+# publica a função no projeto
+supabase functions deploy import-pdf --no-verify-jwt
+```
+
+> `--no-verify-jwt` é de propósito: a validação do JWT é feita **dentro** da
+> função com `auth.getUser()`, para conhecer o utilizador e limitar a taxa de
+> pedidos. Nada disto afeta a app web (que não usa Edge Functions).
+
+### Como funciona
+- O telemóvel envia o PDF em **multipart** (`FormData` → `file`) com o header
+  `Authorization: Bearer <access_token>`.
+- A função valida o token, extrai as linhas com coordenadas, recompõe-as em
+  linhas visuais e devolve `{ "lines": [ ... ] }`.
+- O ficheiro **não é guardado** (vive só na memória da instância) e é descartado
+  no fim — a mesma postura de minimização RGPD da pipeline web.
+
+### Testar localmente
+```bash
+supabase functions serve import-pdf   # serve na porta 54321
+```
+```bash
+# com o CLI a correr e um extrato `extrato.pdf`:
+curl -X POST http://127.0.0.1:54321/functions/v1/import-pdf \
+  -H "Authorization: Bearer <jwt-do-utilizador>" \
+  -F "file=@extrato.pdf"
+```
+Responde `402`/`401` sem token válido, `413` acima de 8 MB, `422` para PDFs
+ilegíveis (protegidos/digitalizados) e `200` com `lines` quando corre bem.
+
+## 7. Lembretes diários (só quando ligares notificações)
+As rotas `POST /api/cron/reminders` e `POST /api/cron/daily-tip` exigem o
+`CRON_SECRET`. Aceitam o header **`x-cron-secret`** (crons externos) e o
+**`Authorization: Bearer <CRON_SECRET>`** (o formato que o Vercel Cron envia),
+por isso podes usar Vercel Cron diretamente:
+
+```jsonc
+// vercel.json (na raiz do monorepo)
+{
+  "crons": [
+    { "path": "/api/cron/reminders", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/daily-tip", "schedule": "0 8 * * *" }
+  ]
+}
+```
+> O Vercel Cron injeta automaticamente o header `Authorization: Bearer` com o
+> `CRON_SECRET` que definires nas Environment Variables. Isto só é preciso quando
+> ativares email/push; a app funciona sem.
 
 ---
 

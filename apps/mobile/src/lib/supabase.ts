@@ -23,6 +23,9 @@ export const AUTH_REDIRECT = process.env.EXPO_PUBLIC_AUTH_REDIRECT ?? 'optifi://
 /** Site público — só para abrir as páginas legais (termos/privacidade). */
 export const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://optifi.pt';
 
+/** Base das Edge Functions do Supabase (`https://<proj>.supabase.co/functions/v1`). */
+export const EDGE_FUNCTIONS = `${url}/functions/v1`;
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     // O browser guardava a sessão sozinho; aqui é preciso dizer onde.

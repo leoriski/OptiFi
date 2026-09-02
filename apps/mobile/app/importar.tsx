@@ -5,11 +5,14 @@ import { Text } from '../src/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
+import type { DocumentPickerAsset } from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import {
+  buildStatement,
   decodeStatementText,
   ingestStatement,
   parseCsv,
+  parsePdfStatementLines,
   pdfContentStart,
   IngestError,
   type BankId,
@@ -17,7 +20,7 @@ import {
 } from '@optifi/ingest';
 import { saveImport, SaveImportError } from '@optifi/data';
 import type { DictKey } from '@optifi/core';
-import { supabase } from '../src/lib/supabase';
+import { supabase, EDGE_FUNCTIONS } from '../src/lib/supabase';
 import { useFinance } from '../src/lib/finance';
 import { useI18n } from '../src/lib/i18n';
 import { alpha, Button, Card, Screen, SectionLabel } from '../src/ui';
@@ -50,6 +53,37 @@ const ERROR_KEY: Record<string, DictKey> = {
 };
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Envia o PDF à Edge Function `import-pdf` do Supabase, que extrai as LINHAS
+ * visuais usando a build serverless do PDF.js (não corre no aparelho). Devolve
+ * `null` quando o ficheiro não é um PDF legível. O ficheiro não é guardado lá.
+ * Usa o formato nativo do React Native (`{ uri, name, type }`) para o upload.
+ */
+async function extractPdfLines(asset: DocumentPickerAsset): Promise<string[] | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session || !asset.uri) return null;
+
+  const name = asset.name || 'statement.pdf';
+  const body = new FormData();
+  body.append('file', { uri: asset.uri, name, type: asset.mimeType ?? 'application/pdf' } as unknown as Blob);
+
+  try {
+    const res = await fetch(`${EDGE_FUNCTIONS}/import-pdf`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body,
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { lines?: string[] };
+    if (!json.lines) return null;
+    return json.lines;
+  } catch {
+    return null;
+  }
+}
 
 /** O que o utilizador escolhe no mapeador; vira `ColumnMapping` no fim. */
 type MapDraft = {
@@ -139,14 +173,23 @@ export default function Importar() {
   const [mapRows, setMapRows] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<MapDraft>(MAP_DEFAULT);
 
-  async function runImport(bytes: Uint8Array, withMapping?: MapDraft) {
+  async function runImport(input: { bytes: Uint8Array } | { lines: string[] }, withMapping?: MapDraft) {
     setError('');
     setBusy(true);
     try {
-      const result = ingestStatement(bytes, {
-        ...(bank === 'outro' ? {} : { bankHint: bank }),
-        ...(withMapping ? { mapping: toMapping(withMapping) } : {}),
-      });
+      // As linhas de texto vêm de um PDF já extraído pela Edge Function e
+      // seguem pelo parser de extratos PDF; os bytes são CSV/texto e seguem
+      // pela pipeline normal (com o mapeamento manual de colunas à mistura).
+      const result =
+        'lines' in input
+          ? (() => {
+              const r = parsePdfStatementLines(input.lines);
+              return { bank: 'outro' as const, summary: buildStatement(r.txs, r.endingBalance) };
+            })()
+          : ingestStatement(input.bytes, {
+              ...(bank === 'outro' ? {} : { bankHint: bank }),
+              ...(withMapping ? { mapping: toMapping(withMapping) } : {}),
+            });
 
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
@@ -160,14 +203,20 @@ export default function Importar() {
       router.back();
     } catch (e) {
       if (e instanceof IngestError) {
-        // Formato desconhecido à primeira: em vez de desistir, mostramos as
-        // primeiras linhas e deixamos o utilizador identificar as colunas.
-        if (e.code === 'unknown_format' && !withMapping) {
-          setPendingBytes(bytes);
-          setMapRows(parseCsv(decodeStatementText(bytes)).slice(0, 8));
-          setMapping(MAP_DEFAULT);
+        if ('lines' in input) {
+          // Erro a ler as linhas do PDF (ex.: indistinguível +/−): avisa com o
+          // texto específico do PDF em vez do genérico.
+          setError('wiz_err_pdf');
+        } else {
+          // Formato desconhecido à primeira: em vez de desistir, mostramos as
+          // primeiras linhas e deixamos o utilizador identificar as colunas.
+          if (e.code === 'unknown_format' && !withMapping) {
+            setPendingBytes(input.bytes);
+            setMapRows(parseCsv(decodeStatementText(input.bytes)).slice(0, 8));
+            setMapping(MAP_DEFAULT);
+          }
+          setError(ERROR_KEY[e.code] ?? 'wiz_err_generic');
         }
-        setError(ERROR_KEY[e.code] ?? 'wiz_err_generic');
       } else if (e instanceof SaveImportError) setError('wiz_err_generic');
       else setError('wiz_err_generic');
     } finally {
@@ -193,14 +242,20 @@ export default function Importar() {
       setError('wiz_err_file_size');
       return;
     }
-    // O PDF precisa de extrair texto de um formato binário, e a biblioteca
-    // que o faz só corre em Node. Dizê-lo é melhor do que falhar com um erro
-    // que parece um ficheiro estragado.
+    // O PDF precisa de extrair texto de um formato binário. Em vez de o fazer
+    // no aparelho (léxico, pesado), entregamos o ficheiro a uma Edge Function
+    // do Supabase que devolve as LINHAS — que passam então pelo mesmo parser
+    // que o CSV. O ficheiro não é guardado lá: entra, dá linhas, e morre.
     if (pdfContentStart(bytes) >= 0) {
-      setError('wiz_err_pdf_mobile');
+      const lines = await extractPdfLines(asset);
+      if (!lines) {
+        setError('wiz_err_pdf');
+        return;
+      }
+      await runImport({ lines });
       return;
     }
-    await runImport(bytes);
+    await runImport({ bytes });
   }
 
   function cancelMapping() {
@@ -327,7 +382,7 @@ export default function Importar() {
               <Text style={{ fontSize: 12.5, color: t0.tx2 }}>{t('wiz_processing')}</Text>
             </View>
           ) : (
-            <Button t={t0} label={t('map_apply')} onPress={() => void runImport(pendingBytes, mapping)} />
+            <Button t={t0} label={t('map_apply')} onPress={() => void runImport({ bytes: pendingBytes }, mapping)} />
           )}
 
           <View style={{ height: 10 }} />
