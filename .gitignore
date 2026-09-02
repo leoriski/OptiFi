@@ -11,5 +11,8 @@ coverage/
 .DS_Store
 .vercel
 
+# Estado local do Supabase CLI (linked project, versões) — não versionar.
+supabase/.temp/
+
 # QR do Expo Go: aponta para o IP da rede local de quem o gerou, não serve a mais ninguém.
 expo-qr.png
